@@ -1,0 +1,2146 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Realtime-Venus session</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@500;600;700&display=swap">
+<script>
+  window.MathJax = {
+    tex: { inlineMath: [['\\(', '\\)']], displayMath: [['\\[', '\\]'], ['$$', '$$']] },
+    svg: { fontCache: 'global' }
+  };
+</script>
+<script defer src="https://cdn.jsdelivr.net/npm/mathjax@3.2.2/es5/tex-svg.js"></script>
+<style>
+/* ---------- Theme tokens ---------- */
+:root {
+  --bg: #F0EEE9; --surface: #F5F5F5; --surface-2: #FFFFFF;
+  --ink: #061324; --ink-2: #142253; --muted: #4A5568;
+  --accent: #4C6EE6; --accent-strong: #2D4CB9;
+  --ok-bg: #F1FDEA; --ok-ink: #16270D;
+  --line: rgba(6, 19, 36, 0.14);
+  --font-head: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Inter", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --bar-h: 64px;
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #061324; --surface: #0D1C33; --surface-2: #142253;
+    --ink: #F0EEE9; --ink-2: #C9CFDB; --muted: #9AA4B8;
+    --accent: #8FA6F2; --accent-strong: #B3C2F7;
+    --ok-bg: #16270D; --ok-ink: #F1FDEA;
+    --line: rgba(240, 238, 233, 0.16);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #061324; --surface: #0D1C33; --surface-2: #142253;
+  --ink: #F0EEE9; --ink-2: #C9CFDB; --muted: #9AA4B8;
+  --accent: #8FA6F2; --accent-strong: #B3C2F7;
+  --ok-bg: #16270D; --ok-ink: #F1FDEA;
+  --line: rgba(240, 238, 233, 0.16);
+  color-scheme: dark;
+}
+*, *::before, *::after { box-sizing: border-box; }
+html { height: 100%; scroll-padding-top: env(safe-area-inset-top, 0px); }
+body {
+  height: 100%; margin: 0; overflow: hidden;
+  background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 30px; line-height: 1.45;
+}
+a { color: var(--accent); text-underline-offset: 0.15em; }
+a:hover { color: var(--accent-strong); }
+:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+img, svg, canvas { max-width: 100%; }
+
+/* ---------- Stage and scaled 1920x1080 frame ---------- */
+#stage { position: fixed; left: 0; right: 0; top: env(safe-area-inset-top, 0px); bottom: calc(var(--bar-h) + env(safe-area-inset-bottom, 0px)); overflow: hidden; }
+#deck { position: absolute; left: 50%; top: 50%; width: 1920px; height: 1080px; transform: translate(-50%, -50%) scale(var(--s, 1)); transform-origin: center; }
+.slide { position: absolute; inset: 0; display: none; flex-direction: column; gap: 28px; padding: 88px 120px 64px; }
+.slide.active { display: flex; }
+
+/* Narrow screens: no scaling, natural flow with scroll */
+body.flow #stage { overflow-y: auto; }
+body.flow #deck { position: static; width: 100%; height: auto; transform: none; }
+body.flow .slide { position: static; padding: 28px 20px 40px; font-size: 18px; gap: 18px; }
+body.flow .slide h1 { font-size: 36px; }
+body.flow .slide h2 { font-size: 28px; }
+body.flow .cols, body.flow .options, body.flow .reading { grid-template-columns: 1fr; }
+body.flow .cols > *, body.flow .interactive { min-width: 0; }
+body.flow .viz { width: 100%; height: auto; }
+body.flow input[type="range"] { width: 100%; }
+body.flow .option { font-size: 20px; min-height: 0; padding: 14px 16px; }
+body.flow .prompt { font-size: 22px; grid-template-columns: 36px 1fr; }
+body.flow #btn-full { display: none; }
+body.flow .row { flex-wrap: wrap; }
+body.flow .badge, body.flow .try, body.flow .readout, body.flow .controls, body.flow .meet-hint, body.flow .explain, body.flow button { font-size: 16px; }
+body.flow #bar { gap: 8px; padding-left: 8px; padding-right: 8px; }
+body.flow #bar button { font-size: 13px; padding: 6px 8px; }
+body.flow #counter { min-width: 0; font-size: 13px; }
+
+/* ---------- Type ---------- */
+h1, h2, h3 { font-family: var(--font-head); color: var(--ink); margin: 0; line-height: 1.12; letter-spacing: -0.01em; }
+h1 { font-size: 88px; font-weight: 700; max-width: 22ch; }
+h2 { font-size: 60px; font-weight: 600; max-width: 30ch; }
+h3 { font-size: 34px; font-weight: 600; }
+p { margin: 0; max-width: 60ch; }
+ul, ol { margin: 0; padding-left: 1.2em; }
+li + li { margin-top: 0.35em; }
+code, .mono { font-family: var(--font-mono); font-size: 0.9em; }
+.muted { color: var(--muted); }
+
+/* ---------- Layouts ---------- */
+.cols { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: start; flex: 1; min-height: 0; }
+.cols.wide-left { grid-template-columns: 3fr 2fr; }
+.cols.wide-right { grid-template-columns: 2fr 3fr; }
+figure { margin: 0; }
+.stack { display: flex; flex-direction: column; gap: 24px; }
+.row { display: flex; gap: 28px; align-items: center; }
+.row > * { min-width: 0; }
+.viz { width: 440px; height: 440px; border-radius: 6px; }
+figcaption { font-size: 22px; color: var(--muted); margin-top: 12px; }
+.math { font-size: 36px; margin: 8px 0; overflow-x: auto; }
+.math mjx-container[display="true"] { text-align: left !important; margin: 0 !important; }
+.symbols { list-style: none; padding: 0; font-size: 26px; }
+.symbols .sym { display: inline-block; min-width: 3.2em; }
+
+/* Title slide */
+.slide[data-type="title"] { justify-content: center; gap: 36px; }
+.slide[data-type="title"] .authors { font-size: 34px; color: var(--ink-2); }
+.slide[data-type="title"] .venue { font-size: 28px; color: var(--muted); }
+.slide[data-type="title"] .links { display: flex; gap: 40px; font-size: 28px; font-weight: 600; }
+.slide[data-type="title"]::before { content: ""; position: absolute; left: 120px; top: 88px; width: 96px; height: 10px; background: var(--accent); }
+
+/* Source tags */
+.sources { margin-top: auto; display: flex; flex-wrap: wrap; gap: 16px; font-size: 20px; color: var(--muted); max-width: none; }
+.source { font-family: var(--font-mono); font-size: 20px; color: var(--muted); white-space: nowrap; }
+.source a { color: inherit; }
+
+/* Jargon tooltip */
+.term { border-bottom: 2px dotted var(--accent); cursor: help; position: relative; }
+.term::after {
+  content: attr(data-def); position: absolute; left: 0; top: calc(100% + 10px); z-index: 5;
+  width: max-content; max-width: 560px; padding: 14px 18px; border-radius: 6px;
+  background: var(--ink); color: var(--bg); font-size: 22px; line-height: 1.4; font-weight: 400;
+  opacity: 0; visibility: hidden; transition: opacity 0.15s;
+}
+.term:hover::after, .term:focus::after { opacity: 1; visibility: visible; }
+
+/* Steps inside a slide */
+.step { opacity: 0; visibility: hidden; transition: opacity 0.25s ease; }
+.step.shown { opacity: 1; visibility: visible; }
+
+/* ---------- Interactive container ---------- */
+.interactive { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 24px 28px; display: flex; flex-direction: column; gap: 18px; min-height: 0; }
+.interactive-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.badge { font-size: 20px; font-weight: 600; padding: 4px 14px; border-radius: 999px; border: 2px solid currentColor; }
+.badge.sim { color: var(--accent-strong); }
+.badge.data { color: var(--ok-ink); background: var(--ok-bg); border-color: transparent; }
+.try { font-size: 24px; color: var(--ink-2); }
+.try strong { color: var(--ink); }
+.controls { display: flex; flex-wrap: wrap; gap: 24px 36px; align-items: center; font-size: 24px; }
+.controls label { display: flex; align-items: center; gap: 14px; white-space: nowrap; }
+.readout { font-family: var(--font-mono); font-size: 26px; display: flex; flex-wrap: wrap; gap: 8px 32px; }
+.readout b { color: var(--accent-strong); font-weight: 600; }
+input[type="range"] { width: 260px; accent-color: var(--accent); height: 28px; }
+button { font: inherit; font-size: 22px; cursor: pointer; border-radius: 6px; border: 2px solid var(--line); background: var(--surface-2); color: var(--ink); padding: 6px 18px; }
+button:hover { border-color: var(--accent); }
+button.reset { font-size: 20px; padding: 4px 14px; }
+
+/* ---------- Quiz ---------- */
+.slide[data-type="quiz"] .question { max-width: 34ch; }
+.options { list-style: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.option { position: relative; display: flex; align-items: center; gap: 24px; margin: 0; padding: 26px 30px; min-height: 120px; background: var(--surface-2); border: 2px solid var(--line); border-radius: 10px; font-size: 32px; transition: opacity 0.25s, background 0.25s; }
+.option::before { content: attr(data-key); flex: none; min-width: 64px; height: 64px; padding: 0 12px; display: grid; place-items: center; border-radius: 32px; background: var(--ink); color: var(--bg); font-family: var(--font-head); font-weight: 700; font-size: 30px; }
+.revealed .option:not([data-correct]) { opacity: 0.4; }
+.revealed .option[data-correct] { background: var(--ok-bg); color: var(--ok-ink); border-color: var(--ok-ink); }
+.revealed .option[data-correct]::after { content: "Correct"; margin-left: auto; font-size: 24px; font-weight: 600; padding: 4px 14px; border: 2px solid currentColor; border-radius: 999px; }
+.quiz-foot { display: flex; flex-wrap: wrap; align-items: center; gap: 32px; }
+.reveal-btn { font-size: 24px; padding: 8px 22px; }
+.meet-hint { font-size: 28px; color: var(--ink-2); }
+.revealed .reveal-btn { visibility: hidden; }
+.quiz-reveal .explain { font-size: 28px; max-width: 70ch; }
+
+/* ---------- Discussion ---------- */
+.prompts { list-style: none; padding: 0; counter-reset: p; display: grid; gap: 40px; margin-top: 24px; }
+.prompt { counter-increment: p; display: grid; grid-template-columns: 80px 1fr; gap: 24px; font-size: 40px; line-height: 1.3; font-family: var(--font-head); font-weight: 500; max-width: 48ch; }
+.prompt::before { content: counter(p); color: var(--accent); font-weight: 700; }
+
+/* ---------- Further reading ---------- */
+.reading { display: grid; grid-template-columns: 1fr 1fr; gap: 32px 64px; align-content: start; }
+.reading-group h3 { font-size: 28px; color: var(--muted); margin-bottom: 10px; }
+.reading-group ul { list-style: none; padding: 0; }
+.reading-item { margin-bottom: 18px; }
+.reading-title { font-weight: 600; font-size: 26px; }
+.reading-meta { display: block; font-size: 20px; color: var(--muted); }
+.why { font-size: 22px; }
+
+/* ---------- Bottom bar ---------- */
+#bar { position: fixed; left: 0; right: 0; bottom: 0; height: calc(var(--bar-h) + env(safe-area-inset-bottom, 0px)); padding: 0 16px env(safe-area-inset-bottom, 0px); display: flex; align-items: center; gap: 12px; background: var(--bg); border-top: 1px solid var(--line); font-size: 16px; z-index: 10; }
+#bar button { flex: none; font-size: 15px; padding: 6px 12px; border-width: 1px; }
+#bar .nav-btn { width: 40px; padding: 6px 0; display: grid; place-items: center; }
+#progress { flex: 1; min-width: 40px; display: flex; gap: 3px; height: 10px; }
+#progress span { flex: 1; background: var(--line); border-radius: 2px; cursor: pointer; }
+#progress span.done { background: var(--accent); }
+#progress span.quiz { background: transparent; border: 2px solid var(--accent-strong); }
+#progress span.quiz.done { background: var(--accent-strong); }
+#counter { font-family: var(--font-mono); min-width: 72px; text-align: center; color: var(--muted); }
+
+/* ---------- Overview grid ---------- */
+#grid { position: fixed; inset: 0; z-index: 20; background: var(--bg); overflow-y: auto; padding: calc(32px + env(safe-area-inset-top, 0px)) 32px calc(32px + env(safe-area-inset-bottom, 0px)); }
+#grid[hidden] { display: none; }
+#grid h2 { font-size: 28px; margin-bottom: 20px; }
+.grid-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
+.grid-card { text-align: left; font-size: 16px; padding: 14px; min-height: 96px; display: flex; flex-direction: column; gap: 6px; border-width: 1px; }
+.grid-card .n { font-family: var(--font-mono); color: var(--muted); }
+.grid-card.quiz { border: 2px solid var(--accent-strong); }
+.grid-card.current { background: var(--accent); color: #fff; }
+
+/* ---------- Paper-specific components ---------- */
+svg.fig { display: block; max-width: 100%; height: auto; }
+svg text { font-family: var(--font-body); }
+.svg-label { fill: var(--ink); font-size: 22px; }
+.svg-label.strong, .svg-value.strong { font-weight: 700; }
+.svg-value { fill: var(--ink-2); font-size: 22px; font-family: var(--font-mono); }
+.svg-small { fill: var(--muted); font-size: 20px; }
+.svg-mono { fill: var(--ink); font-size: 20px; font-family: var(--font-mono); }
+.svg-head { fill: var(--ink); font-size: 26px; font-family: var(--font-head); font-weight: 600; }
+.lane-bg { fill: var(--surface-2); stroke: var(--line); }
+.grid-line { stroke: var(--line); stroke-width: 1.5; }
+.axis-line { stroke: var(--muted); stroke-width: 2; }
+.thr-line { stroke: #D55E00; stroke-width: 3; stroke-dasharray: 8 6; }
+.bar-ours { fill: var(--accent); }
+.bar-other { fill: var(--muted); opacity: 0.55; }
+.bar-dim { fill: var(--muted); opacity: 0.18; }
+.c-user { fill: #56B4E9; }
+.c-asst { fill: #009E73; }
+.c-asst2 { fill: #009E73; opacity: 0.7; }
+.c-bg { fill: #E69F00; }
+.c-bg-run { fill: #E69F00; opacity: 0.35; }
+.c-hid { fill: #CC79A7; }
+.c-err { fill: #D55E00; }
+.c-block { fill: var(--line); stroke: var(--muted); stroke-dasharray: 6 5; stroke-width: 2; }
+.c-miss { fill: none; stroke: #D55E00; stroke-dasharray: 6 5; stroke-width: 3; }
+.c-ghost { fill: none; stroke: var(--muted); stroke-dasharray: 6 5; stroke-width: 2; }
+.c-cut { stroke: #D55E00; stroke-width: 4; }
+.seg-label { fill: #061324; font-size: 20px; font-weight: 600; }
+.seg-label.on-clear { fill: var(--ink); }
+.hl-ring { fill: none; stroke: var(--accent); stroke-width: 4; }
+.node { cursor: pointer; }
+.node rect { fill: var(--surface-2); stroke: var(--line); stroke-width: 2; }
+.node:hover rect { stroke: var(--accent); }
+.node.on rect { stroke: var(--accent); stroke-width: 4; fill: var(--surface); }
+.node text { fill: var(--ink); font-size: 22px; }
+.box rect { fill: var(--surface-2); stroke: var(--line); stroke-width: 2; }
+.box text { fill: var(--ink); font-size: 22px; }
+.box.on rect { stroke: var(--accent); stroke-width: 4; }
+.box.dim { opacity: 0.35; }
+.group-bg { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
+.edge { stroke: var(--muted); stroke-width: 2.5; fill: none; }
+.edge.hid { stroke: #CC79A7; stroke-dasharray: 7 5; }
+.edge.bgk { stroke: #E69F00; }
+.state rect { fill: var(--surface-2); stroke: var(--line); stroke-width: 2; }
+.state text { fill: var(--ink-2); font-size: 20px; }
+.state.on rect { fill: var(--accent); stroke: var(--accent); }
+.state.on text { fill: var(--bg); font-weight: 600; }
+.state.done rect { stroke: var(--accent); }
+.state.fail rect { fill: #D55E00; stroke: #D55E00; }
+.state.fail text { fill: #061324; font-weight: 600; }
+.choice { display: flex; flex-wrap: wrap; gap: 10px; }
+.choice button.on { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.choice.vertical { flex-direction: column; align-items: stretch; }
+.choice.vertical button { text-align: left; }
+.panel { background: var(--surface-2); border: 1px solid var(--line); border-radius: 8px; padding: 18px 22px; font-size: 24px; }
+.kv { display: grid; grid-template-columns: max-content 1fr; gap: 10px 22px; font-size: 24px; margin: 0; }
+.kv dt { color: var(--muted); }
+.kv dd { margin: 0; }
+.unit-line { font-family: var(--font-mono); font-size: 23px; background: var(--surface-2); border: 1px solid var(--line); border-radius: 6px; padding: 10px 14px; overflow-x: auto; white-space: nowrap; }
+table.tbl { border-collapse: collapse; font-size: 24px; }
+table.tbl th, table.tbl td { text-align: left; padding: 10px 18px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.tbl th { font-family: var(--font-head); color: var(--muted); font-weight: 600; }
+table.tbl td code { white-space: nowrap; }
+.lead { font-size: 44px; font-family: var(--font-head); font-weight: 500; max-width: 38ch; line-height: 1.25; }
+.big-list li { font-size: 32px; max-width: 58ch; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 28px; font-size: 22px; color: var(--ink-2); }
+.sw { display: inline-block; width: 22px; height: 22px; border-radius: 4px; vertical-align: -3px; margin-right: 8px; }
+.note { font-size: 22px; color: var(--muted); max-width: none; }
+.frame-cards { display: grid; grid-template-columns: repeat(8, 1fr); gap: 10px; }
+.fcard { background: var(--surface-2); border: 2px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 20px; display: flex; flex-direction: column; gap: 6px; min-height: 250px; }
+.fcard .ts { font-family: var(--font-mono); color: var(--muted); }
+.fcard.sel { border: 4px solid var(--accent); }
+.fcard.out { opacity: 0.4; }
+.fcard .tag { font-weight: 600; color: var(--accent-strong); }
+.mini { display: grid; grid-template-columns: 5.5em 1fr 2.6em; align-items: center; gap: 6px; font-size: 20px; }
+.mini .track { height: 12px; background: var(--line); border-radius: 6px; overflow: hidden; }
+.mini .fill { height: 100%; background: var(--accent); }
+.mini .fill.nov { background: #E69F00; }
+.mini .fill.sc { background: #009E73; }
+.ctx-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; font-size: 22px; }
+.chip { font-family: var(--font-mono); font-size: 20px; padding: 4px 12px; border-radius: 999px; border: 2px solid var(--line); background: var(--surface-2); }
+.chip.acc { border-color: var(--accent); }
+body.flow .frame-cards { grid-template-columns: repeat(2, 1fr); }
+body.flow .kv, body.flow .panel, body.flow table.tbl, body.flow .unit-line, body.flow .lead, body.flow .big-list li { font-size: 16px; }
+body.flow .choice button { font-size: 15px; }
+html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; }
+.interactive > * { flex-shrink: 0; }
+.interactive .cols { flex: none; }
+.frame-cards { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+.fcard { min-height: 0; }
+.try { max-width: none; }
+.reading { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 32px 48px; }
+#w-memr input[type="range"] { width: 180px; }
+.fcard { padding: 8px 10px; gap: 4px; }
+#w-memr { gap: 12px; }
+#mr-w { font-size: 22px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { transition: none !important; animation: none !important; }
+}
+</style>
+</head>
+<body>
+<div id="stage">
+<main id="deck">
+
+<!-- ================= SLIDES START ================= -->
+
+<!-- 1. Title -->
+<section class="slide" data-type="title" data-title="Title">
+  <h1 class="paper-title">Realtime-Venus: A full-duplex interaction system with asynchronous delegation</h1>
+  <p class="authors">Venus Team, Ant Group, and Tsinghua University</p>
+  <p class="venue">arXiv preprint 2609.13814, 2026</p>
+  <p class="links"><a href="https://arxiv.org/abs/2609.13814">Paper</a><a href="https://github.com/inclusionAI/Realtime-Venus">Code</a><a href="https://realtime-venus.github.io/">Project page</a><a href="https://huggingface.co/inclusionAI/Realtime-Venus">Model weights</a></p>
+</section>
+
+<!-- 2. Problem -->
+<section class="slide" data-type="interactive" data-title="The problem">
+  <h2>A voice assistant must talk and work at the same time</h2>
+  <div class="cols wide-right">
+    <div class="stack">
+      <p>A user asks a question that needs a tool, for example a web search.</p>
+      <p>A tool call can take many seconds. A blocking design stops the conversation for that time.</p>
+      <p>The paper keeps the conversation alive while the work runs in the background.</p>
+    </div>
+    <div class="interactive" id="w-problem">
+      <div class="interactive-head">
+        <span class="badge sim">Illustrative simulation</span>
+        <button class="reset" type="button">Reset</button>
+      </div>
+      <div class="choice" id="pb-mode"></div>
+      <div class="controls">
+        <label>Tool delay <input id="pb-delay" type="range" min="2" max="15" step="1" value="8" aria-label="Tool delay in seconds"> <span class="mono" id="pb-delay-v"></span></label>
+        <label><input id="pb-q2" type="checkbox" checked> User asks a second question</label>
+      </div>
+      <svg id="pb-svg" class="fig" width="1060" height="320" viewBox="0 0 1060 320" role="img" aria-label="Timeline of user, assistant, and background lanes"></svg>
+      <div class="readout">
+        <span>First reply: <b id="pb-first"></b></span>
+        <span>Conversation blocked: <b id="pb-block"></b></span>
+        <span>Q2 answer starts: <b id="pb-q2r"></b></span>
+      </div>
+      <p class="note">Q1: "Can my car with tail number 7 drive in Beijing today?" Q2: "And what is a tail number?"</p>
+      <p class="try"><strong>Try:</strong> Select each mode. Move the tool delay slider. Look at the assistant lane.</p>
+    </div>
+  </div>
+  <p class="sources"><span class="source">Sec 1</span><span class="source">Q1 adapted from Appendix B.2</span><span class="source">Times are illustrative</span></p>
+</section>
+
+<!-- 3. Primer: full-duplex -->
+<section class="slide" data-type="interactive" data-title="Primer: full-duplex">
+  <h2>Primer: full-duplex dialogue in one-second chunks</h2>
+  <p>A turn-based system speaks or listens, but not both. A <span class="term" tabindex="0" data-def="A full-duplex model listens and speaks at the same time, like a person on a phone call.">full-duplex</span> model does both. Realtime-Venus cuts time into one-second chunks. In each chunk, the model reads new input and writes one decision.</p>
+  <p>A <span class="term" tabindex="0" data-def="A short reply such as 'yes' or 'right'. It shows that the listener follows. It does not ask for the turn.">backchannel</span> must not stop the assistant. An <span class="term" tabindex="0" data-def="User speech that takes the turn, for example a correction or a new request.">interruption</span> must stop it.</p>
+  <div class="interactive" id="w-chunks">
+    <div class="interactive-head">
+      <span class="badge sim">Illustrative simulation</span>
+      <div class="row" style="gap:12px">
+        <button type="button" id="ck-prev">Previous chunk</button>
+        <button type="button" id="ck-next">Next chunk</button>
+        <button type="button" id="ck-play">Play</button>
+        <button class="reset" type="button">Reset</button>
+      </div>
+    </div>
+    <svg id="ck-svg" class="fig" width="1640" height="270" viewBox="0 0 1640 270" role="img" aria-label="Twelve one-second chunks with user audio and model decisions"></svg>
+    <div class="readout">
+      <span>Chunk <b id="ck-k"></b></span>
+      <span>User audio: <b id="ck-user"></b></span>
+      <span>Decision: <b id="ck-dec"></b></span>
+      <span>Assistant text: <b id="ck-txt"></b></span>
+    </div>
+    <p class="try"><strong>Try:</strong> Press Play. Look at chunk 6 and chunk 8.</p>
+  </div>
+  <p class="sources"><span class="source">Sec 4.1</span><span class="source">Sec 4.4</span><span class="source">Dialogue adapted from Fig 4</span></p>
+</section>
+
+<!-- 4. Primer: Thinker-Talker -->
+<section class="slide" data-type="content" data-title="Primer: Thinker-Talker">
+  <h2>Primer: the Thinker writes text, the Talker writes speech</h2>
+  <div class="cols wide-right">
+    <div class="stack">
+      <p>Realtime-Venus starts from MiniCPM-o 4.5, an open 9B model.</p>
+      <p>The Thinker is the language model. It reads audio and video tokens and writes text.</p>
+      <p>The Talker reads the <span class="term" tabindex="0" data-def="The internal vectors of the language model for each token. They carry meaning and context.">hidden states</span> of the Thinker. It writes S3 speech tokens. A flow-matching decoder turns these tokens into a waveform.</p>
+      <p class="step">Text and speech share one meaning. The speech side does not need its own language model.</p>
+    </div>
+    <figure>
+      <svg class="fig" width="980" height="560" viewBox="0 0 980 560" role="img" aria-label="Thinker and Talker diagram">
+        <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor" style="color:var(--muted)"/></marker></defs>
+        <g class="box"><rect x="20" y="60" width="220" height="80" rx="8"/><text x="130" y="108" text-anchor="middle">Video frames</text></g>
+        <g class="box"><rect x="20" y="200" width="220" height="80" rx="8"/><text x="130" y="248" text-anchor="middle">Audio stream</text></g>
+        <g class="box"><rect x="320" y="110" width="260" height="140" rx="8"/><text x="450" y="170" text-anchor="middle" class="svg-head">Thinker</text><text x="450" y="210" text-anchor="middle">Qwen3-8B</text></g>
+        <g class="box"><rect x="660" y="60" width="300" height="80" rx="8"/><text x="810" y="108" text-anchor="middle">Text tokens</text></g>
+        <g class="box"><rect x="660" y="230" width="300" height="100" rx="8"/><text x="810" y="272" text-anchor="middle" class="svg-head">Talker</text><text x="810" y="310" text-anchor="middle">S3 speech tokens</text></g>
+        <g class="box"><rect x="660" y="400" width="300" height="80" rx="8"/><text x="810" y="448" text-anchor="middle">Flow-matching decoder</text></g>
+        <path class="edge" d="M240 100 L320 150" marker-end="url(#arr)"/>
+        <path class="edge" d="M240 240 L320 210" marker-end="url(#arr)"/>
+        <path class="edge" d="M580 150 L660 100" marker-end="url(#arr)"/>
+        <path class="edge" d="M580 220 L660 270" marker-end="url(#arr)"/>
+        <text x="560" y="300" class="svg-small" text-anchor="middle">hidden states</text>
+        <path class="edge" d="M810 330 L810 400" marker-end="url(#arr)"/>
+        <path class="edge" d="M810 480 L810 530" marker-end="url(#arr)"/>
+        <text x="830" y="530" class="svg-small">waveform, 24 kHz</text>
+      </svg>
+    </figure>
+  </div>
+  <p class="sources"><span class="source">Sec 4.1</span><span class="source">Sec 7.2</span><span class="source"><a href="https://arxiv.org/abs/2503.20215">Thinker-Talker: Qwen2.5-Omni</a></span></p>
+</section>
+
+<!-- 5. Core idea -->
+<section class="slide" data-type="content" data-title="Core idea">
+  <h2>Core idea: a fast frontend and a slow harness on one timeline</h2>
+  <p class="lead">The frontend keeps the conversation alive. The harness does the slow work in the background. Both write to one causal timeline.</p>
+  <svg class="fig" width="1680" height="500" viewBox="0 0 1680 500" role="img" aria-label="Dual-loop diagram: interaction loop and capability loop">
+    <defs><marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor" style="color:var(--muted)"/></marker></defs>
+    <rect class="group-bg" x="10" y="10" width="760" height="470" rx="14"/>
+    <text x="40" y="56" class="svg-head">Interaction loop (full-duplex)</text>
+    <text x="40" y="88" class="svg-small">Always on. Latency-sensitive.</text>
+    <rect class="group-bg" x="830" y="10" width="840" height="470" rx="14"/>
+    <text x="860" y="56" class="svg-head">Capability loop (asynchronous)</text>
+    <text x="860" y="88" class="svg-small">On demand. Can take many seconds.</text>
+    <g class="box"><rect x="50" y="200" width="180" height="100" rx="50"/><text x="140" y="258" text-anchor="middle">User</text></g>
+    <g class="box"><rect x="380" y="170" width="330" height="160" rx="10"/><text x="545" y="230" text-anchor="middle" class="svg-head">Frontend</text><text x="545" y="270" text-anchor="middle">Realtime-Venus-Omni</text><text x="545" y="302" text-anchor="middle">or Realtime-Venus-Audio</text></g>
+    <path class="edge" d="M230 230 L380 230" marker-end="url(#arr2)"/>
+    <text x="305" y="215" text-anchor="middle" class="svg-small">audio, video</text>
+    <path class="edge" d="M380 280 L230 280" marker-end="url(#arr2)"/>
+    <text x="305" y="315" text-anchor="middle" class="svg-small">speech</text>
+    <g class="box"><rect x="880" y="150" width="200" height="80" rx="8"/><text x="980" y="198" text-anchor="middle">Capture</text></g>
+    <g class="box"><rect x="1160" y="150" width="200" height="80" rx="8"/><text x="1260" y="198" text-anchor="middle">Dispatch</text></g>
+    <g class="box"><rect x="1430" y="150" width="200" height="80" rx="8"/><text x="1530" y="190" text-anchor="middle">Backends</text><text x="1530" y="216" text-anchor="middle" class="svg-small">LLMs, tools</text></g>
+    <g class="box"><rect x="1160" y="320" width="200" height="80" rx="8"/><text x="1260" y="368" text-anchor="middle">Return</text></g>
+    <path class="edge" d="M1080 190 L1160 190" marker-end="url(#arr2)"/>
+    <path class="edge" d="M1360 190 L1430 190" marker-end="url(#arr2)"/>
+    <path class="edge" d="M1530 230 L1530 360 L1360 360" marker-end="url(#arr2)"/>
+    <path class="edge hid" d="M710 190 L880 190" marker-end="url(#arr2)"/>
+    <text x="880" y="262" class="svg-small">private delegate request</text>
+    <path class="edge bgk" d="M1160 360 L760 360 L760 300 L710 300" marker-end="url(#arr2)"/>
+    <text x="880" y="395" class="svg-small">private backend reply</text>
+    <text x="880" y="450" class="svg-mono">QUEUED → RUNNING → COMPLETED → DELIVERING → DELIVERED</text>
+  </svg>
+  <p class="sources"><span class="source">Sec 3.1</span><span class="source">Fig 3</span></p>
+</section>
+
+<!-- 6. Quiz 1 -->
+<section class="slide" data-type="quiz" data-title="Quiz: core idea">
+  <h2 class="question">The harness runs a long task. What does the frontend do during that time?</h2>
+  <ol class="options">
+    <li class="option" data-key="A">It waits in silence for the result</li>
+    <li class="option" data-key="B" data-correct>It continues to listen and can speak</li>
+    <li class="option" data-key="C">It runs the tool calls itself</li>
+    <li class="option" data-key="D">It closes the session until the result arrives</li>
+  </ol>
+  <div class="quiz-foot">
+    <p class="meet-hint">Type A, B, C, or D in the Meet chat.</p>
+    <button class="reveal-btn" type="button">Reveal answer</button>
+  </div>
+  <div class="quiz-reveal step">
+    <p class="explain">Perception stays active during speech and during background tasks. The harness, not the frontend, selects and runs the backend capability. <span class="source">Sec 3.1</span></p>
+  </div>
+</section>
+
+<!-- 7. Eq 1 -->
+<section class="slide" data-type="interactive" data-title="Runtime step, Eq. 1">
+  <h2>One runtime step per chunk</h2>
+  <div class="cols wide-right">
+    <div class="stack">
+      <div class="math">\[ (s_{k+1},\, O_k) = F_m(s_k,\, x_k^{m},\, b_k;\, \eta_k) \]</div>
+      <div class="math">\[ O_k = (c_k,\, Y_k,\, D_k,\, S_k) \]</div>
+      <p>Both frontends use this step. The index \(k\) counts one-second chunks. The frontend \(m\) is audio or omni.</p>
+      <p>Only \(Y_k\) and \(S_k\) reach the user. The other outputs stay private.</p>
+    </div>
+    <div class="interactive" id="w-eq1">
+      <div class="interactive-head">
+        <span class="badge sim">Illustrative simulation</span>
+        <button class="reset" type="button">Reset</button>
+      </div>
+      <svg id="eq1-svg" class="fig" width="900" height="370" viewBox="0 0 900 370" role="img" aria-label="Inputs and outputs of one runtime step"></svg>
+      <div class="panel">
+        <dl class="kv">
+          <dt>Symbol</dt><dd id="eq1-name"></dd>
+          <dt>Meaning</dt><dd id="eq1-mean"></dd>
+          <dt>Example</dt><dd id="eq1-ex"></dd>
+          <dt>Reaches user</dt><dd id="eq1-user"></dd>
+        </dl>
+      </div>
+      <p class="try"><strong>Try:</strong> Click a box in the diagram. Read its meaning below.</p>
+    </div>
+  </div>
+  <p class="sources"><span class="source">Sec 3.2</span><span class="source">Eq. 1</span><span class="source">Examples are illustrative</span></p>
+</section>
+
+<!-- 8. Serialization -->
+<section class="slide" data-type="interactive" data-title="Stream serialization">
+  <h2>Three streams share one clock</h2>
+  <p class="note">User, chunks 1 to 5: "Can my car with tail number 7 drive in Beijing today?" (adapted from Appendix B.2)</p>
+  <div class="interactive" id="w-ser">
+    <div class="interactive-head">
+      <span class="badge sim">Illustrative simulation</span>
+      <div class="row" style="gap:12px">
+        <button type="button" id="ser-prev">Previous chunk</button>
+        <button type="button" id="ser-next">Next chunk</button>
+        <button class="reset" type="button">Reset</button>
+      </div>
+    </div>
+    <div class="controls">
+      <label>Backend delay <input id="ser-delay" type="range" min="3" max="10" step="1" value="7" aria-label="Backend delay in chunks"> <span class="mono" id="ser-delay-v"></span></label>
+    </div>
+    <svg id="ser-svg" class="fig" width="1640" height="350" viewBox="0 0 1640 350" role="img" aria-label="Chunk timeline with video, audio, status, assistant, and background lanes"></svg>
+    <div class="unit-line" id="ser-unit"></div>
+    <div class="readout">
+      <span>User hears: <b id="ser-hear"></b></span>
+      <span>Hidden: <b id="ser-hid"></b></span>
+    </div>
+    <p class="try"><strong>Try:</strong> Step to chunk 7. Then move the backend delay slider.</p>
+  </div>
+  <p class="sources"><span class="source">Sec 4.3</span><span class="source">Fig 6</span><span class="source">Unit strings from the serialization example in Sec 4.3</span></p>
+</section>
+
+<!-- 9. Control tokens -->
+<section class="slide" data-type="content" data-title="Control tokens">
+  <h2>Eight tokens control the conversation</h2>
+  <div class="cols">
+    <table class="tbl">
+      <tr><th>Token</th><th>Job</th></tr>
+      <tr><td><code>&lt;|listen|&gt;</code></td><td>Continue to perceive. Do not speak.</td></tr>
+      <tr><td><code>&lt;|speak|&gt;</code></td><td>Generate foreground text and speech now.</td></tr>
+      <tr><td><code>&lt;|chunk_eos|&gt;</code></td><td>Close the speech of this chunk.</td></tr>
+      <tr><td><code>&lt;|turn_eos|&gt;</code></td><td>Close the assistant turn.</td></tr>
+    </table>
+    <table class="tbl">
+      <tr><th>Token</th><th>Job</th></tr>
+      <tr><td><code>&lt;delegate&gt;</code></td><td>Open a private task request.</td></tr>
+      <tr><td><code>&lt;/delegate&gt;</code></td><td>Close the task request.</td></tr>
+      <tr><td><code>&lt;backend&gt;</code></td><td>Open a harness result. It is input, not a target.</td></tr>
+      <tr><td><code>&lt;/backend&gt;</code></td><td>Close the harness result.</td></tr>
+    </table>
+  </div>
+  <p>The model writes the delegate span in natural language. The host hides it from the screen and from speech. The paper adds the four new tokens to the tokenizer, the input embeddings, and the LM head.</p>
+  <p class="sources"><span class="source">Sec 4.1</span><span class="source">Sec 4.3</span><span class="source">Sec 5.1</span></p>
+</section>
+
+<!-- 10. Eq 2 pacing -->
+<section class="slide" data-type="interactive" data-title="Speech pacing, Eq. 2">
+  <h2>The scheduler paces text to match speech playback</h2>
+  <div class="cols wide-right">
+    <div class="stack">
+      <div class="math">\[ n_k = \arg\min_{n} \left| \tau_{k-1} + \mathcal{D}(Y_{k,1:n}) - t_k \right| \]</div>
+      <ul class="symbols">
+        <li><span class="sym">\( t_k \)</span> The end of chunk \(k\).</li>
+        <li><span class="sym">\( \tau_{k-1} \)</span> The end time of the speech that the model scheduled before.</li>
+        <li><span class="sym">\( \mathcal{D}(Y_{k,1:n}) \)</span> The estimated speech time of the first \(n\) text tokens.</li>
+        <li><span class="sym">\( n_k \)</span> The number of text tokens for this chunk.</li>
+      </ul>
+      <p>When speech lags, the model writes fewer tokens. When playback has room, it writes more.</p>
+    </div>
+    <div class="interactive" id="w-pace">
+      <div class="interactive-head">
+        <span class="badge sim">Illustrative simulation</span>
+        <button class="reset" type="button">Reset</button>
+      </div>
+      <div class="controls">
+        <label>Speech backlog <input id="pc-back" type="range" min="0" max="1.5" step="0.05" value="0.3" aria-label="Speech backlog in seconds"> <span class="mono" id="pc-back-v"></span></label>
+        <label>Seconds per token <input id="pc-spt" type="range" min="0.12" max="0.45" step="0.01" value="0.22" aria-label="Seconds per token"> <span class="mono" id="pc-spt-v"></span></label>
+      </div>
+      <svg id="pc-time" class="fig" width="920" height="150" viewBox="0 0 920 150" role="img" aria-label="Playback timeline"></svg>
+      <svg id="pc-bars" class="fig" width="920" height="280" viewBox="0 0 920 280" role="img" aria-label="Error for each candidate n"></svg>
+      <div class="readout">
+        <span>Time left: <b id="pc-left"></b></span>
+        <span>\(n_k\): <b id="pc-n"></b></span>
+        <span>Text: <b id="pc-txt"></b></span>
+      </div>
+      <p class="try"><strong>Try:</strong> Move the backlog slider to the right. Look at the value of n.</p>
+    </div>
+  </div>
+  <p class="sources"><span class="source">Sec 4.3</span><span class="source">Eq. 2</span><span class="source">Token durations are illustrative</span></p>
+</section>
+
+<!-- 11. Eq 3 -->
+<section class="slide" data-type="content" data-title="Joint policy, Eq. 3">
+  <h2>One policy for control, text, and delegation</h2>
+  <div class="math">\[ p_{\theta,\phi}(O_{1:K} \mid U, B) = \prod_{k=1}^{K} p_\theta(c_k, Y_k, D_k \mid U_{\le k}, B_{\le k}, O_{&lt;k})\; p_\phi(S_k \mid H_{\le k}, Y_{\le k}, S_{&lt;k}) \]</div>
+  <div class="cols">
+    <ul class="symbols">
+      <li><span class="sym">\( U, B \)</span> User audio features and sparse backend results.</li>
+      <li><span class="sym">\( p_\theta \)</span> The LLM. It predicts the control token, the text, and the delegate text.</li>
+      <li><span class="sym">\( p_\phi \)</span> The speech decoder. It predicts speech tokens from the LLM hidden states \(H\).</li>
+    </ul>
+    <div class="stack">
+      <p>The control token comes from the same representation as the reply. Thus, the model can treat a similar sound in different ways, by its role in the conversation.</p>
+      <p class="step">Backend results are inputs, not predictions. Training updates only the Thinker. The acoustic decoder stays fixed.</p>
+    </div>
+  </div>
+  <p class="sources"><span class="source">Sec 4.4</span><span class="source">Eq. 3</span><span class="source">Sec 4.6</span></p>
+</section>
+
+<!-- 12. Overlap handling -->
+<section class="slide" data-type="interactive" data-title="Overlap handling">
+  <h2>Same overlap, different meaning, different action</h2>
+  <div class="interactive" id="w-ovl">
+    <div class="interactive-head">
+      <span class="badge sim">Illustrative simulation</span>
+      <button class="reset" type="button">Reset</button>
+    </div>
+    <div class="cols wide-right" style="gap:32px">
+      <div class="stack" style="gap:14px">
+        <p class="note">Assistant: "Aim for five to seven driving hours a day, and take a break every two hours." The user speaks in the middle.</p>
+        <div class="choice vertical" id="ovl-ev"></div>
+      </div>
+      <div class="stack" style="gap:16px">
+        <svg id="ovl-svg" class="fig" width="1000" height="250" viewBox="0 0 1000 250" role="img" aria-label="Assistant speech with an overlap event"></svg>
+        <div class="panel">
+          <dl class="kv">
+            <dt>Tokens</dt><dd id="ovl-tok" class="mono"></dd>
+            <dt>Duplex target</dt><dd id="ovl-dup"></dd>
+            <dt>Delegation target</dt><dd id="ovl-del"></dd>
+            <dt>Unspoken part</dt><dd id="ovl-uns"></dd>
+            <dt>Next words</dt><dd id="ovl-next"></dd>
+          </dl>
+        </div>
+      </div>
+    </div>
+    <p class="try"><strong>Try:</strong> Select "Right, right." Then select the correction. Compare the unspoken part.</p>
+  </div>
+  <p class="sources"><span class="source">Sec 4.4</span><span class="source">Sec 6.2</span><span class="source">Fig 4, Fig 8</span><span class="source">Sentences are illustrative</span></p>
+</section>
+
+<!-- 13. Quiz 2 -->
+<section class="slide" data-type="quiz" data-title="Quiz: backchannel">
+  <h2 class="question">The assistant speaks. The user says "right, right". What does the model emit next?</h2>
+  <ol class="options">
+    <li class="option" data-key="A"><code>&lt;|turn_eos|&gt;</code></li>
+    <li class="option" data-key="B" data-correct><code>&lt;|speak|&gt;</code></li>
+    <li class="option" data-key="C"><code>&lt;delegate&gt;</code></li>
+    <li class="option" data-key="D"><code>&lt;|listen|&gt;</code></li>
+  </ol>
+  <div class="quiz-foot">
+    <p class="meet-hint">Type A, B, C, or D in the Meet chat.</p>
+    <button class="reveal-btn" type="button">Reveal answer</button>
+  </div>
+  <div class="quiz-reveal step">
+    <p class="explain">A backchannel does not take the turn, so the model keeps <code>&lt;|speak|&gt;</code> and continues its plan. The other tokens stop the reply or start a task without a reason. <span class="source">Sec 4.4</span></p>
+  </div>
+</section>
+
+<!-- 14. Memory construction -->
+<section class="slide" data-type="interactive" data-title="Memory: construction">
+  <h2>Memory keeps only the frames that change</h2>
+  <p style="max-width:none">An hour of video does not fit in the context window. A training-free memory keeps a frame only if it differs enough from the previous frame, after <span class="term" tabindex="0" data-def="The module looks for the best shift of each small block of pixels. Camera motion then gives a small difference.">block motion matching</span>.</p>
+  <div class="interactive" id="w-memc">
+    <div class="interactive-head">
+      <span class="badge sim">Illustrative simulation</span>
+      <button class="reset" type="button">Reset</button>
+    </div>
+    <div class="controls">
+      <label>Threshold <input id="mc-thr" type="range" min="1" max="12" step="0.5" value="4" aria-label="Change threshold"> <span class="mono" id="mc-thr-v"></span></label>
+      <label><input id="mc-match" type="checkbox" checked> Motion matching</label>
+      <label><input id="mc-prot" type="checkbox" checked> Local-change protection</label>
+      <label>Max drops in a row <input id="mc-max" type="range" min="0" max="9" step="1" value="4" aria-label="Maximum consecutive drops"> <span class="mono" id="mc-max-v"></span></label>
+    </div>
+    <canvas id="mc-strip" width="1440" height="118" style="width:1440px;max-width:100%"></canvas>
+    <svg id="mc-bars" class="fig" width="1440" height="150" viewBox="0 0 1440 150" role="img" aria-label="Change score for each frame"></svg>
+    <div class="readout">
+      <span>Kept: <b id="mc-kept"></b></span>
+      <span>Memory saved: <b id="mc-saved"></b></span>
+      <span>Kept by local protection: <b id="mc-loc"></b></span>
+      <span>Kept by drop limit: <b id="mc-lim"></b></span>
+    </div>
+    <p class="try"><strong>Try:</strong> Clear "Motion matching". Look at the first ten frames, where the camera pans.</p>
+  </div>
+  <p class="sources"><span class="source">Sec 4.2</span><span class="source">Fig 5</span><span class="source">Frames, scores, and costs are illustrative</span></p>
+</section>
+
+<!-- 15. Memory retrieval -->
+<section class="slide" data-type="interactive" data-title="Memory: retrieval">
+  <h2>Retrieval balances relevance and novelty</h2>
+  <div class="interactive" id="w-memr">
+    <div class="interactive-head">
+      <span class="badge sim">Illustrative simulation</span>
+      <button class="reset" type="button">Reset</button>
+    </div>
+    <div class="controls">
+      <div class="choice" id="mr-q"></div>
+      <label>Novelty weight <input id="mr-lam" type="range" min="0" max="1" step="0.05" value="0.2" aria-label="Novelty weight"> <span class="mono" id="mr-lam-v"></span></label>
+      <label>Frames to keep <input id="mr-k" type="range" min="1" max="4" step="1" value="3" aria-label="Frames to keep"> <span class="mono" id="mr-k-v"></span></label>
+      <label><input id="mr-mad" type="checkbox" checked> MAD token weights</label>
+    </div>
+    <div class="frame-cards" id="mr-cards"></div>
+    <div class="readout" id="mr-w"></div>
+    <div class="ctx-row" id="mr-ctx"></div>
+    <p class="try"><strong>Try:</strong> Move the novelty weight above 0.7. Look at the repeated scene at 18:20.</p>
+  </div>
+  <p class="note">Relevance uses MaxSim: each query token takes its best cosine match in a frame. MAD weights favor tokens whose scores vary across frames. The paper does not give the exact formula to combine the scores. This demo uses a weighted sum.</p>
+  <p class="sources"><span class="source">Sec 4.2</span><span class="source">Fig 5</span><span class="source"><a href="https://arxiv.org/abs/2004.12832">MaxSim: ColBERT</a></span><span class="source">Vectors are illustrative</span></p>
+</section>
+
+<!-- 16. Architecture -->
+<section class="slide" data-type="interactive" data-title="Architecture">
+  <h2>Realtime-Venus-Omni, part by part</h2>
+  <div class="cols wide-left">
+    <div class="interactive" id="w-arch">
+      <div class="interactive-head">
+        <span class="badge data">Data from paper</span>
+        <button class="reset" type="button">Reset</button>
+      </div>
+      <svg id="arch-svg" class="fig" width="1020" height="600" viewBox="0 0 1020 600" role="img" aria-label="Clickable architecture diagram"></svg>
+      <p class="try"><strong>Try:</strong> Click a box. Read its role and its input and output.</p>
+    </div>
+    <div class="panel stack" style="gap:14px">
+      <h3 id="arch-name"></h3>
+      <dl class="kv" style="grid-template-columns:1fr">
+        <dt>Role</dt><dd id="arch-role"></dd>
+        <dt>Input</dt><dd id="arch-in"></dd>
+        <dt>Output</dt><dd id="arch-out"></dd>
+        <dt>Used by</dt><dd id="arch-used"></dd>
+      </dl>
+    </div>
+  </div>
+  <p class="sources"><span class="source">Sec 4.1</span><span class="source">Sec 4.2</span><span class="source">Sec 4.3</span><span class="source">Sec 4.6</span><span class="source">Sec 7.2</span><span class="source">Fig 5</span></p>
+</section>
+
+<!-- 17. Harness lifecycle -->
+<section class="slide" data-type="interactive" data-title="Harness lifecycle">
+  <h2>The harness: capture, dispatch, return</h2>
+  <div class="interactive" id="w-har">
+    <div class="interactive-head">
+      <span class="badge sim">Illustrative simulation</span>
+      <div class="row" style="gap:12px">
+        <button type="button" id="har-next">Next stage</button>
+        <button class="reset" type="button">Reset</button>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="choice" id="har-req"></div>
+      <label><input id="har-err" type="checkbox"> Error</label>
+      <label><input id="har-stale" type="checkbox"> Stale result</label>
+    </div>
+    <svg id="har-svg" class="fig" width="1640" height="320" viewBox="0 0 1640 320" role="img" aria-label="Harness stages and work states"></svg>
+    <div class="panel">
+      <dl class="kv">
+        <dt>Now</dt><dd id="har-now"></dd>
+        <dt>Router choice</dt><dd id="har-route" class="mono"></dd>
+        <dt>Frontend</dt><dd>It continues to listen and speak during all stages.</dd>
+      </dl>
+    </div>
+    <p class="try"><strong>Try:</strong> Press Next stage six times. Then select "Error" and press Next stage again.</p>
+  </div>
+  <p class="sources"><span class="source">Sec 5</span><span class="source">Eq. 4 to 6</span><span class="source">Fig 7</span><span class="source">Requests and router choices are illustrative</span></p>
+</section>
+
+<!-- 18. Causal snapshot -->
+<section class="slide" data-type="interactive" data-title="Causal snapshot, Eq. 4">
+  <h2>Capture freezes the evidence at the request time</h2>
+  <div class="cols wide-right">
+    <div class="stack">
+      <div class="math">\[ X_i = \mathrm{Snap}(\mathcal{B}^{\sigma};\, \kappa_i,\, \Delta) \]</div>
+      <ul class="symbols">
+        <li><span class="sym">\( \mathcal{B}^{\sigma} \)</span> The bounded buffer of session \(\sigma\).</li>
+        <li><span class="sym">\( \kappa_i \)</span> The time \(T_i\) of the opening token and the last input at that time.</li>
+        <li><span class="sym">\( \Delta \)</span> The look-back horizon.</li>
+      </ul>
+      <p>Later observations cannot change \(X_i\). Assistant speech enters only if its playback was confirmed by \(T_i\).</p>
+    </div>
+    <div class="interactive" id="w-snap">
+      <div class="interactive-head">
+        <span class="badge sim">Illustrative simulation</span>
+        <button class="reset" type="button">Reset</button>
+      </div>
+      <div class="controls">
+        <label>Request time \(T_i\) <input id="sn-t" type="range" min="5" max="19" step="0.5" value="12" aria-label="Request time"> <span class="mono" id="sn-t-v"></span></label>
+        <label>Look-back \(\Delta\) <input id="sn-d" type="range" min="2" max="14" step="1" value="10" aria-label="Look-back horizon"> <span class="mono" id="sn-d-v"></span></label>
+      </div>
+      <svg id="sn-svg" class="fig" width="940" height="380" viewBox="0 0 940 380" role="img" aria-label="Event timeline with the snapshot window"></svg>
+      <div class="readout">
+        <span>In \(X_i\): <b id="sn-in"></b></span>
+      </div>
+      <p class="note" id="sn-out"></p>
+      <p class="try"><strong>Try:</strong> Move the request time from 12 to 14. Look at the reply "Let me check."</p>
+    </div>
+  </div>
+  <p class="sources"><span class="source">Sec 5.1</span><span class="source">Eq. 4</span><span class="source">Events are illustrative</span></p>
+</section>
+
+<!-- 19. Quiz 3 -->
+<section class="slide" data-type="quiz" data-title="Quiz: snapshot">
+  <h2 class="question">Why does capture freeze the evidence at the request time?</h2>
+  <ol class="options">
+    <li class="option" data-key="A">To make the request text shorter</li>
+    <li class="option" data-key="B" data-correct>To stop later events from changing the task</li>
+    <li class="option" data-key="C">To let the router read the raw media</li>
+    <li class="option" data-key="D">To skip the schema validation step</li>
+  </ol>
+  <div class="quiz-foot">
+    <p class="meet-hint">Type A, B, C, or D in the Meet chat.</p>
+    <button class="reveal-btn" type="button">Reveal answer</button>
+  </div>
+  <div class="quiz-reveal step">
+    <p class="explain">The work item keeps the evidence boundary of \(T_i\), and later observations cannot alter \(X_i\). The router reads only a compact summary, and schema validation still runs. <span class="source">Sec 5.1</span><span class="source">Sec 5.2</span></p>
+  </div>
+</section>
+
+<!-- 20. Data and training -->
+<section class="slide" data-type="interactive" data-title="Data and training">
+  <h2>2.8 million samples in one post-training pass</h2>
+  <div class="cols wide-left">
+    <div class="interactive" id="w-data">
+      <div class="interactive-head">
+        <span class="badge data">Data from paper</span>
+        <button class="reset" type="button">Reset</button>
+      </div>
+      <div class="choice" id="dt-model"></div>
+      <svg id="dt-svg" class="fig" width="1000" height="520" viewBox="0 0 1000 520" role="img" aria-label="Training data size for each category"></svg>
+      <div class="readout"><span>Samples used: <b id="dt-sum"></b></span></div>
+      <p class="try"><strong>Try:</strong> Select Realtime-Venus-Audio. Look at the video rows.</p>
+    </div>
+    <div class="stack" style="gap:18px">
+      <p>By modality: video 70%, audio 30%. By skill: offline understanding 56%, proactive duplex 37%, delegation 6%.</p>
+      <p>The pipeline plans a scenario, makes speech and sound, and aligns all events on one session clock.</p>
+      <p>The full-duplex pipeline gives about 72,200 sessions and 1,600 hours of aligned audio, in Chinese and English.</p>
+      <p>The loss uses only response spans. Each sample has the same total weight.</p>
+    </div>
+  </div>
+  <p class="sources"><span class="source">Table 1</span><span class="source">Sec 4.5</span><span class="source">Sec 4.6</span><span class="source">Sec 6.1</span><span class="source">Fig 8</span></p>
+</section>
+
+<!-- 21. Video results -->
+<section class="slide" data-type="interactive" data-title="Results: video">
+  <h2>Video: best online model on six of eight benchmarks</h2>
+  <div class="interactive" id="w-vid">
+    <div class="interactive-head">
+      <span class="badge data">Data from paper</span>
+      <button class="reset" type="button">Reset</button>
+    </div>
+    <div class="controls">
+      <div class="choice" id="vd-b"></div>
+      <label><input id="vd-off" type="checkbox"> Show offline models</label>
+    </div>
+    <svg id="vd-svg" class="fig" width="1640" height="560" viewBox="0 0 1640 560" role="img" aria-label="Video benchmark scores"></svg>
+    <p class="try"><strong>Try:</strong> Select ProactiveVideoQA. Then show the offline models.</p>
+  </div>
+  <p class="note">ProactiveVideoQA reports PAUC. OmniPro reports probe-mode accuracy. The other benchmarks report accuracy.</p>
+  <p class="sources"><span class="source">Table 2</span><span class="source">Sec 7.3</span></p>
+</section>
+
+<!-- 22. Audio results -->
+<section class="slide" data-type="interactive" data-title="Results: audio">
+  <h2>Audio: strong, but not always first</h2>
+  <div class="interactive" id="w-aud">
+    <div class="interactive-head">
+      <span class="badge data">Data from paper</span>
+      <button class="reset" type="button">Reset</button>
+    </div>
+    <div class="choice" id="au-b"></div>
+    <svg id="au-svg" class="fig" width="1640" height="480" viewBox="0 0 1640 480" role="img" aria-label="Audio benchmark scores"></svg>
+    <p class="try"><strong>Try:</strong> Select MMAR. Then select MMSU. Find the first place.</p>
+  </div>
+  <p class="note">VoiceBench AlpacaEval reports a judge score. The other benchmarks report accuracy in percent.</p>
+  <p class="sources"><span class="source">Table 4</span><span class="source">Table 5</span><span class="source">Sec 7.4</span></p>
+</section>
+
+<!-- 23. Full-duplex results -->
+<section class="slide" data-type="interactive" data-title="Results: full-duplex">
+  <h2>Full-duplex: strong continuation, weaker interruption response</h2>
+  <div class="interactive" id="w-fd">
+    <div class="interactive-head">
+      <span class="badge data">Data from paper</span>
+      <button class="reset" type="button">Reset</button>
+    </div>
+    <div class="controls">
+      <div class="choice" id="fd-s"></div>
+      <div class="choice" id="fd-m"></div>
+    </div>
+    <div class="row" style="align-items:flex-start;gap:40px">
+      <svg id="fd-bars" class="fig" width="860" height="470" viewBox="0 0 860 470" role="img" aria-label="Full-Duplex-Bench bars"></svg>
+      <svg id="fd-sc" class="fig" width="720" height="470" viewBox="0 0 720 470" role="img" aria-label="Interruption response and continuation for each model"></svg>
+    </div>
+    <p class="try"><strong>Try:</strong> Select "Talking to others". Compare GPT-4o and Realtime-Venus-Omni in both charts.</p>
+  </div>
+  <p class="sources"><span class="source">Table 6</span><span class="source">Sec 7.5</span><span class="source">Some baselines come from FDB v1.5 and JoyAI-Talker papers, as Table 6 notes</span></p>
+</section>
+
+<!-- 24. Tool use and delegation -->
+<section class="slide" data-type="interactive" data-title="Results: tools and delegation">
+  <h2>Tool selection is good. Arguments and routing need work.</h2>
+  <div class="interactive" id="w-tool">
+    <div class="interactive-head">
+      <span class="badge data">Data from paper</span>
+      <button class="reset" type="button">Reset</button>
+    </div>
+    <div class="choice" id="tl-m"></div>
+    <div class="row" style="align-items:flex-start;gap:40px">
+      <div class="stack" style="gap:8px">
+        <h3>Full-Duplex-Bench v3 (Table 7)</h3>
+        <svg id="tl-svg" class="fig" width="880" height="450" viewBox="0 0 880 450" role="img" aria-label="Tool use results"></svg>
+      </div>
+      <div class="stack" style="gap:8px">
+        <h3>Delegate benchmark (Table 8)</h3>
+        <svg id="dg-svg" class="fig" width="700" height="450" viewBox="0 0 700 450" role="img" aria-label="Delegation decision results"></svg>
+      </div>
+    </div>
+    <p class="try"><strong>Try:</strong> Select Pass@1. Then compare the two bars for routine interaction.</p>
+  </div>
+  <p class="sources"><span class="source">Table 7</span><span class="source">Table 8</span><span class="source">Sec 7.5</span><span class="source">Sec 7.6</span></p>
+</section>
+
+<!-- 25. Memory ablation -->
+<section class="slide" data-type="interactive" data-title="Ablation: memory">
+  <h2>Ablation: what memory adds on long videos</h2>
+  <div class="interactive" id="w-abl">
+    <div class="interactive-head">
+      <span class="badge data">Data from paper</span>
+      <button class="reset" type="button">Reset</button>
+    </div>
+    <div class="controls">
+      <div class="choice" id="ab-bb"></div>
+      <label><input id="ab-mem" type="checkbox" checked> Memory on</label>
+    </div>
+    <svg id="ab-svg" class="fig" width="1640" height="440" viewBox="0 0 1640 440" role="img" aria-label="Accuracy for each duration bin with and without memory"></svg>
+    <p class="try"><strong>Try:</strong> Select MiniCPM-o 4.5. Look at the LongVideoBench bins.</p>
+  </div>
+  <p class="note">This is the only ablation in the paper. The paper has no ablation of the training components.</p>
+  <p class="sources"><span class="source">Table 3</span><span class="source">Sec 7.3</span></p>
+</section>
+
+<!-- 26. Quiz 4 -->
+<section class="slide" data-type="quiz" data-title="Quiz: delegation">
+  <h2 class="question">Realtime-Venus-Audio has 92.22% delegation recall but 39.44% specificity. What is its most common error?</h2>
+  <ol class="options">
+    <li class="option" data-key="A">It misses requests that need a tool</li>
+    <li class="option" data-key="B" data-correct>It delegates routine requests it can answer</li>
+    <li class="option" data-key="C">It speaks the delegate text aloud</li>
+    <li class="option" data-key="D">It ignores the results from the backend</li>
+  </ol>
+  <div class="quiz-foot">
+    <p class="meet-hint">Type A, B, C, or D in the Meet chat.</p>
+    <button class="reveal-btn" type="button">Reveal answer</button>
+  </div>
+  <div class="quiz-reveal step">
+    <p class="explain">Low specificity means that it delegates many routine requests. High recall means that it rarely misses requests that need external capabilities. <span class="source">Table 8</span><span class="source">Sec 7.6</span></p>
+  </div>
+</section>
+
+<!-- 27. Limitations -->
+<section class="slide" data-type="content" data-title="Limitations">
+  <h2>Limitations, as the authors state them</h2>
+  <ul class="big-list">
+    <li>On ProactiveVideoQA and WorldSense, the Omni model scores lower than MiniCPM-o 4.5.</li>
+    <li>The results do not isolate each training component. That needs controlled ablations.</li>
+    <li>The interruption response rate is lower than Joy-Duplex, GPT-4o, and Gemini 3.1 Live.</li>
+    <li>Argument accuracy and Pass@1 stay below GPT-Realtime.</li>
+    <li>The delegate benchmark checks only the routing decision, not the task result.</li>
+    <li>Future work: shorter chunks, longer context, and recovery from slow or failed tool calls.</li>
+  </ul>
+  <p class="sources"><span class="source">Sec 7.3</span><span class="source">Sec 7.5</span><span class="source">Sec 7.6</span><span class="source">Sec 8</span></p>
+</section>
+
+<!-- 28. Takeaways -->
+<section class="slide" data-type="content" data-title="Takeaways">
+  <h2>Takeaways</h2>
+  <ul class="big-list">
+    <li>One timeline holds user input, model output, delegate requests, and backend results.</li>
+    <li>The frontend decides when to listen, speak, or delegate. The harness does the slow work and writes the reply text.</li>
+    <li>Capture freezes the evidence at the request time, so later events cannot change the task.</li>
+    <li>Continuation under backchannels and background speech is strong. Delegation decisions are still weak.</li>
+  </ul>
+  <p class="sources"><span class="source">Sec 3 to 8</span></p>
+</section>
+
+<!-- 29. Discussion -->
+<section class="slide" data-type="discussion" data-title="Discussion">
+  <h2>Discussion</h2>
+  <ol class="prompts">
+    <li class="prompt">The harness writes the reply text, but the frontend decides when to speak it. Is this the right split? What can go wrong when the conversation moves on?</li>
+    <li class="prompt">The Audio model delegates too much, and the Omni model delegates too little. Which error costs a user more? Should a learned token or a separate router make this decision?</li>
+  </ol>
+</section>
+
+<!-- 30. Further reading -->
+<section class="slide" data-type="reading" data-title="Further reading">
+  <h2>Further reading</h2>
+  <div class="reading">
+    <div class="reading-group">
+      <h3>Background</h3>
+      <ul>
+        <li class="reading-item"><a class="reading-title" href="https://arxiv.org/abs/2410.00037">Moshi: a speech-text foundation model for real-time dialogue</a><span class="reading-meta">Défossez et al., 2024</span><p class="why">The first full-duplex speech LLM. It models user and assistant audio as parallel streams.</p></li>
+        <li class="reading-item"><a class="reading-title" href="https://arxiv.org/abs/2604.27393">MiniCPM-o 4.5: Towards real-time full-duplex omni-modal interaction</a><span class="reading-meta">Cui et al., 2026</span><p class="why">The base model of Realtime-Venus. It introduces the Omni-Flow timeline.</p></li>
+        <li class="reading-item"><a class="reading-title" href="https://arxiv.org/abs/2004.12832">ColBERT: Efficient and effective passage search via contextualized late interaction over BERT</a><span class="reading-meta">Khattab and Zaharia, 2020</span><p class="why">The source of the MaxSim operator in the memory retrieval.</p></li>
+      </ul>
+    </div>
+    <div class="reading-group">
+      <h3>Related</h3>
+      <ul>
+        <li class="reading-item"><a class="reading-title" href="https://arxiv.org/abs/2604.12928">MoshiRAG: Asynchronous knowledge retrieval for full-duplex speech language models</a><span class="reading-meta">Chien et al., 2026</span><p class="why">A similar frontend and backend split, with retrieval in place of general tools.</p></li>
+        <li class="reading-item"><a class="reading-title" href="https://arxiv.org/abs/2606.09186">DuplexOmni: Real-time listening, seeing, thinking, and speaking for full-duplex interaction</a><span class="reading-meta">Huang et al., 2026</span><p class="why">An interaction layer and a pluggable thinking layer that work in parallel.</p></li>
+        <li class="reading-item"><a class="reading-title" href="https://arxiv.org/abs/2507.23159">Full-Duplex-Bench v1.5: Evaluating overlap handling for full-duplex speech models</a><span class="reading-meta">Lin et al., 2025</span><p class="why">The benchmark behind the four overlap scenarios in Table 6.</p></li>
+      </ul>
+    </div>
+    <div class="reading-group">
+      <h3>Resources</h3>
+      <ul>
+        <li class="reading-item"><a class="reading-title" href="https://github.com/inclusionAI/Realtime-Venus">Realtime-Venus on GitHub</a><span class="reading-meta">inclusionAI, 2026</span><p class="why">Source code for the Omni model, the harness package, and a browser demo.</p></li>
+        <li class="reading-item"><a class="reading-title" href="https://huggingface.co/inclusionAI/Realtime-Venus">Realtime-Venus model weights</a><span class="reading-meta">Hugging Face, 2026</span><p class="why">The two 9B checkpoints, Omni and Audio.</p></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- ================= SLIDES END ================= -->
+
+</main>
+</div>
+
+<nav id="bar" aria-label="Slide navigation">
+  <button class="nav-btn" id="btn-prev" type="button" aria-label="Previous"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="M10 3 5 8l5 5" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+  <button class="nav-btn" id="btn-next" type="button" aria-label="Next"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
+  <div id="progress" aria-hidden="true"></div>
+  <span id="counter"></span>
+  <button id="btn-grid" type="button" title="Overview (G)">Overview</button>
+  <button id="btn-theme" type="button" title="Switch theme">Theme</button>
+  <button id="btn-full" type="button" title="Full screen (F)">Full screen</button>
+</nav>
+
+<div id="grid" hidden>
+  <h2>All slides</h2>
+  <div class="grid-list"></div>
+</div>
+
+<script>
+/* ================= Deck engine. Edit only if needed. ================= */
+(function () {
+  const deck = document.getElementById('deck');
+  const slides = Array.from(deck.querySelectorAll(':scope > section.slide'));
+  const progress = document.getElementById('progress');
+  const counter = document.getElementById('counter');
+  const grid = document.getElementById('grid');
+  const gridList = grid.querySelector('.grid-list');
+  const enterHandlers = new Map();
+  let cur = -1;
+
+  const stepsOf = s => Array.from(s.querySelectorAll('.step'));
+  const shownCount = s => stepsOf(s).filter(e => e.classList.contains('shown')).length;
+  function setSteps(s, n) {
+    stepsOf(s).forEach((e, i) => e.classList.toggle('shown', i < n));
+    s.classList.toggle('revealed', !!s.querySelector('.quiz-reveal.shown'));
+  }
+  function titleOf(s) {
+    const h = s.querySelector('h1, h2');
+    return s.dataset.title || (h ? h.textContent.trim() : '');
+  }
+
+  function show(i, opts) {
+    opts = opts || {};
+    i = Math.max(0, Math.min(slides.length - 1, i));
+    if (cur >= 0) slides[cur].classList.remove('active');
+    cur = i;
+    const s = slides[cur];
+    s.classList.add('active');
+    setSteps(s, opts.allSteps ? stepsOf(s).length : 0);
+    history.replaceState(null, '', '#' + (cur + 1));
+    updateChrome();
+    (enterHandlers.get(s) || []).forEach(fn => { try { fn(); } catch (err) { console.error(err); } });
+  }
+  function next() {
+    const s = slides[cur], n = shownCount(s);
+    if (n < stepsOf(s).length) setSteps(s, n + 1); else if (cur < slides.length - 1) show(cur + 1);
+  }
+  function prev() {
+    const s = slides[cur], n = shownCount(s);
+    if (n > 0) setSteps(s, n - 1); else if (cur > 0) show(cur - 1, { allSteps: true });
+  }
+  function reveal(s) {
+    const st = stepsOf(s), idx = st.findIndex(e => e.classList.contains('quiz-reveal'));
+    if (idx >= 0) setSteps(s, Math.max(shownCount(s), idx + 1));
+  }
+
+  // Progress bar and overview grid
+  slides.forEach((s, i) => {
+    const seg = document.createElement('span');
+    if (s.dataset.type === 'quiz') seg.classList.add('quiz');
+    seg.title = (i + 1) + '. ' + titleOf(s);
+    seg.addEventListener('click', () => show(i));
+    progress.appendChild(seg);
+    const card = document.createElement('button');
+    card.type = 'button';
+    card.className = 'grid-card' + (s.dataset.type === 'quiz' ? ' quiz' : '');
+    card.innerHTML = '<span class="n"></span><span class="t"></span>';
+    card.querySelector('.n').textContent = (i + 1) + (s.dataset.type === 'quiz' ? '  Quiz' : '');
+    card.querySelector('.t').textContent = titleOf(s);
+    card.addEventListener('click', () => { toggleGrid(false); show(i); });
+    gridList.appendChild(card);
+  });
+  function updateChrome() {
+    Array.from(progress.children).forEach((seg, i) => seg.classList.toggle('done', i <= cur));
+    Array.from(gridList.children).forEach((c, i) => c.classList.toggle('current', i === cur));
+    counter.textContent = (cur + 1) + ' / ' + slides.length;
+  }
+  function toggleGrid(force) {
+    const open = force === undefined ? grid.hidden : force;
+    grid.hidden = !open;
+    if (open) { const c = gridList.children[cur]; if (c) c.focus(); }
+  }
+  function toggleFull() {
+    try {
+      if (document.fullscreenElement) document.exitFullscreen();
+      else document.documentElement.requestFullscreen();
+    } catch (err) { console.warn(err); }
+  }
+  function toggleTheme() {
+    const root = document.documentElement;
+    const dark = root.dataset.theme ? root.dataset.theme === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches;
+    root.dataset.theme = dark ? 'light' : 'dark';
+    try { localStorage.setItem('deck-theme', root.dataset.theme); } catch (err) { /* storage unavailable */ }
+  }
+  try { const t = localStorage.getItem('deck-theme'); if (t) document.documentElement.dataset.theme = t; } catch (err) { /* storage unavailable */ }
+
+  // Buttons
+  document.getElementById('btn-prev').addEventListener('click', prev);
+  document.getElementById('btn-next').addEventListener('click', next);
+  document.getElementById('btn-grid').addEventListener('click', () => toggleGrid());
+  document.getElementById('btn-theme').addEventListener('click', toggleTheme);
+  document.getElementById('btn-full').addEventListener('click', toggleFull);
+  deck.addEventListener('click', e => {
+    const rb = e.target.closest('.reveal-btn');
+    if (rb) { reveal(rb.closest('.slide')); return; }
+    const rs = e.target.closest('.reset');
+    if (rs) { const w = rs.closest('.interactive'); if (w) w.dispatchEvent(new CustomEvent('deck:reset')); }
+  });
+
+  // Keyboard
+  const CAPTURE = 'input, select, textarea, [contenteditable=""], [contenteditable="true"], [data-keys="capture"]';
+  document.addEventListener('keydown', e => {
+    if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
+    const t = e.target;
+    if (e.key === 'Escape') {
+      if (!grid.hidden) toggleGrid(false);
+      else if (t && t.blur && t !== document.body) t.blur();
+      return;
+    }
+    if (t && t.closest && t.closest(CAPTURE)) return;
+    const onButton = t && t.closest && t.closest('button, a');
+    if (!grid.hidden) { if (e.key === 'g' || e.key === 'G') toggleGrid(false); return; }
+    switch (e.key) {
+      case 'ArrowRight': case 'PageDown': next(); break;
+      case ' ': if (onButton) return; next(); break;
+      case 'ArrowLeft': case 'PageUp': prev(); break;
+      case 'Home': show(0); break;
+      case 'End': show(slides.length - 1); break;
+      case 'f': case 'F': toggleFull(); break;
+      case 'g': case 'G': toggleGrid(true); break;
+      default: return;
+    }
+    e.preventDefault();
+  });
+
+  // Swipe (ignored inside interactives and controls)
+  let tx = null, ty = null;
+  const stage = document.getElementById('stage');
+  stage.addEventListener('touchstart', e => {
+    if (e.target.closest('.interactive, input, select, textarea, button')) { tx = null; return; }
+    tx = e.touches[0].clientX; ty = e.touches[0].clientY;
+  }, { passive: true });
+  stage.addEventListener('touchend', e => {
+    if (tx === null) return;
+    const dx = e.changedTouches[0].clientX - tx, dy = e.changedTouches[0].clientY - ty;
+    if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy)) (dx < 0 ? next : prev)();
+    tx = null;
+  }, { passive: true });
+
+  // Scaling
+  function fit() {
+    const flow = window.innerWidth < 760 || window.innerWidth < window.innerHeight * 0.8;
+    document.body.classList.toggle('flow', flow);
+    if (!flow) {
+      const r = stage.getBoundingClientRect();
+      deck.style.setProperty('--s', Math.min(r.width / 1920, r.height / 1080));
+    }
+  }
+  window.addEventListener('resize', fit);
+  window.addEventListener('hashchange', () => {
+    const n = parseInt(location.hash.slice(1), 10);
+    if (n && n - 1 !== cur) show(n - 1);
+  });
+
+  // Public API
+  window.Deck = {
+    go: i => show(i),
+    next, prev,
+    onEnter(el, fn) { const s = el.closest ? el.closest('.slide') : el; if (!enterHandlers.has(s)) enterHandlers.set(s, []); enterHandlers.get(s).push(fn); if (s === slides[cur]) fn(); },
+    onReset(el, fn) { el.addEventListener('deck:reset', fn); },
+    rng(seed) { let a = seed >>> 0; return function () { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ (t >>> 15), t | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; }; }
+  };
+
+  fit();
+  const start = parseInt(location.hash.slice(1), 10);
+  show(start ? start - 1 : 0);
+})();
+</script>
+
+<script>
+/* ================= Slide widgets ================= */
+
+/* Shared helpers */
+const NS = 'http://www.w3.org/2000/svg';
+function S(tag, attrs, parent) {
+  const e = document.createElementNS(NS, tag);
+  if (attrs) for (const k in attrs) e.setAttribute(k, attrs[k]);
+  if (parent) parent.appendChild(e);
+  return e;
+}
+function T(parent, x, y, str, attrs) {
+  const t = S('text', Object.assign({ x: x, y: y }, attrs || {}), parent);
+  t.textContent = str;
+  return t;
+}
+function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); }
+function $(id) { return document.getElementById(id); }
+function choice(container, items, value, onChange) {
+  const api = { v: value };
+  const btns = items.map(it => {
+    const b = document.createElement('button');
+    b.type = 'button'; b.textContent = it.label; b.dataset.v = String(it.v);
+    b.addEventListener('click', () => api.set(it.v, true));
+    container.appendChild(b);
+    return b;
+  });
+  api.set = function (v, fire) {
+    api.v = v;
+    btns.forEach(b => { const on = b.dataset.v === String(v); b.classList.toggle('on', on); b.setAttribute('aria-pressed', on); });
+    if (fire && onChange) onChange(v);
+  };
+  api.set(value, false);
+  return api;
+}
+/* Horizontal bar chart. rows: [{label, value, ours, dim}] */
+function hbars(svg, rows, o) {
+  clear(svg);
+  const W = +svg.getAttribute('width'), H = +svg.getAttribute('height');
+  const lw = o.labelW || 340, right = 110, top = 6;
+  const rh = (H - top - 6) / rows.length;
+  const bh = Math.min(rh * 0.66, 42);
+  const sc = v => Math.max(2, (v / o.max) * (W - lw - right));
+  rows.forEach((r, i) => {
+    const y = top + i * rh, cy = y + rh / 2 + 8;
+    T(svg, lw - 14, cy, r.label, { 'text-anchor': 'end', class: 'svg-label' + (r.ours ? ' strong' : '') });
+    S('rect', { x: lw, y: y + (rh - bh) / 2, width: sc(r.value), height: bh, rx: 3, class: r.ours ? 'bar-ours' : (r.dim ? 'bar-dim' : 'bar-other') }, svg);
+    T(svg, lw + sc(r.value) + 10, cy, o.fmt ? o.fmt(r.value) : String(r.value), { class: 'svg-value' + (r.ours ? ' strong' : '') });
+  });
+}
+const OURS = /Realtime-Venus/;
+
+/* 2. Problem timeline */
+(function () {
+  const root = $('w-problem'); if (!root) return;
+  const svg = $('pb-svg'), delay = $('pb-delay'), q2 = $('pb-q2');
+  const X0 = 150, X1 = 1040, TMAX = 32, lanes = { user: 14, asst: 104, bg: 194 }, LH = 76;
+  const x = t => X0 + t * (X1 - X0) / TMAX;
+  const fmt = t => (Math.round(t * 10) / 10) + ' s';
+  const mode = choice($('pb-mode'), [
+    { v: 'turn', label: 'Turn-based, blocking' },
+    { v: 'block', label: 'Full-duplex, blocking' },
+    { v: 'async', label: 'Full-duplex, async' }
+  ], 'async', render);
+  function seg(lane, a, b, cls, label) {
+    S('rect', { x: x(a), y: lanes[lane], width: Math.max(2, x(b) - x(a)), height: LH, rx: 6, class: cls }, svg);
+    if (label) T(svg, (x(a) + x(b)) / 2, lanes[lane] + LH / 2 + 7, label, { 'text-anchor': 'middle', class: 'seg-label' + (/c-block|c-miss/.test(cls) ? ' on-clear' : '') });
+  }
+  function render() {
+    const d = +delay.value, withQ2 = q2.checked, m = mode.v;
+    $('pb-delay-v').textContent = d + ' s';
+    clear(svg);
+    [['user', 'User'], ['asst', 'Assistant'], ['bg', 'Background']].forEach(([k, l]) => {
+      S('rect', { x: X0, y: lanes[k], width: X1 - X0, height: LH, class: 'lane-bg' }, svg);
+      T(svg, X0 - 14, lanes[k] + LH / 2 + 8, l, { 'text-anchor': 'end', class: 'svg-label' });
+    });
+    for (let t = 0; t <= TMAX; t += 4) {
+      S('line', { x1: x(t), x2: x(t), y1: 8, y2: 278, class: 'grid-line' }, svg);
+      T(svg, x(t), 306, t + ' s', { 'text-anchor': 'middle', class: 'svg-small' });
+    }
+    seg('user', 0, 4, 'c-user', 'Q1');
+    let first, blocked, q2txt = 'no Q2';
+    if (m === 'turn') {
+      seg('bg', 4.5, 4.5 + d, 'c-bg', 'Tool');
+      seg('asst', 4.5, 4.5 + d, 'c-block', 'Blocked');
+      seg('asst', 5 + d, 11 + d, 'c-asst', 'Answer');
+      first = 5 + d; blocked = d;
+      if (withQ2) { seg('user', 8, 10, 'c-miss', 'Q2'); q2txt = 'never, not heard'; }
+    } else if (m === 'block') {
+      seg('asst', 4.5, 6.5, 'c-asst', 'Ack');
+      seg('bg', 6.5, 6.5 + d, 'c-bg', 'Tool');
+      seg('asst', 6.5, 6.5 + d, 'c-block', 'Blocked');
+      seg('asst', 7 + d, 13 + d, 'c-asst', 'Answer');
+      first = 4.5; blocked = d;
+      if (withQ2) { seg('user', 8, 10, 'c-user', 'Q2'); seg('asst', 13.5 + d, 16 + d, 'c-asst2', 'A2'); q2txt = fmt(13.5 + d); }
+    } else {
+      seg('asst', 4.5, 6.5, 'c-asst', 'Ack');
+      seg('bg', 6.5, 6.5 + d, 'c-bg', 'Task');
+      let free = 6.5;
+      if (withQ2) { seg('user', 8, 10, 'c-user', 'Q2'); seg('asst', 10.5, 13, 'c-asst2', 'A2'); free = 13; q2txt = fmt(10.5); }
+      const start = Math.max(6.5 + d, free) + 0.5;
+      seg('asst', start, start + 6, 'c-asst', 'Answer');
+      first = 4.5; blocked = 0;
+    }
+    $('pb-first').textContent = fmt(first);
+    $('pb-block').textContent = fmt(blocked);
+    $('pb-q2r').textContent = q2txt;
+  }
+  delay.addEventListener('input', render);
+  q2.addEventListener('change', render);
+  Deck.onReset(root, () => { delay.value = 8; q2.checked = true; mode.set('async'); render(); });
+  render();
+})();
+
+/* 3. Chunk clock */
+(function () {
+  const root = $('w-chunks'); if (!root) return;
+  const svg = $('ck-svg');
+  const C = [
+    { u: 'How long', ut: 'question', d: '<|listen|>', a: '' },
+    { u: 'should I drive', ut: 'question', d: '<|listen|>', a: '' },
+    { u: 'each day?', ut: 'question', d: '<|listen|>', a: '' },
+    { u: '', ut: '', d: '<|speak|>', a: 'Aim for' },
+    { u: '', ut: '', d: '<|speak|>', a: 'five to seven' },
+    { u: 'Right.', ut: 'backchannel', cell: 'Right.', d: '<|speak|>', a: 'hours a day,' },
+    { u: '', ut: '', d: '<|speak|>', a: 'with a break' },
+    { u: 'Wait, what', ut: 'interrupt', d: '<|turn_eos|>', a: '' },
+    { u: 'about meals?', ut: 'interrupt', d: '<|listen|>', a: '' },
+    { u: '', ut: '', d: '<|speak|>', a: 'Stop for lunch' },
+    { u: '', ut: '', d: '<|speak|>', a: 'after two hours.' },
+    { u: '', ut: '', d: '<|turn_eos|>', a: '' }
+  ];
+  const X0 = 200, CW = (1630 - X0) / 12, rows = { u: 20, d: 100, a: 180 }, RH = 64;
+  let k = 0, timer = null;
+  const shortDec = d => d === '<|listen|>' ? 'listen' : d === '<|speak|>' ? 'speak' : 'end turn';
+  function render() {
+    clear(svg);
+    [['u', 'User audio'], ['d', 'Decision'], ['a', 'Assistant']].forEach(([r, l]) => T(svg, X0 - 14, rows[r] + RH / 2 + 8, l, { 'text-anchor': 'end', class: 'svg-label' }));
+    C.forEach((c, i) => {
+      const x = X0 + i * CW, past = i <= k;
+      const op = past ? 1 : 0.3;
+      const g = S('g', { opacity: op }, svg);
+      S('rect', { x: x + 3, y: rows.u, width: CW - 6, height: RH, rx: 6, class: c.ut ? 'c-user' : 'lane-bg' }, g);
+      if (c.ut) T(g, x + CW / 2, rows.u + RH / 2 + 7, c.cell || c.ut, { 'text-anchor': 'middle', class: 'seg-label' });
+      const dc = c.d === '<|speak|>' ? 'c-asst' : c.d === '<|turn_eos|>' ? 'c-err' : 'lane-bg';
+      S('rect', { x: x + 3, y: rows.d, width: CW - 6, height: RH, rx: 6, class: dc }, g);
+      T(g, x + CW / 2, rows.d + RH / 2 + 7, shortDec(c.d), { 'text-anchor': 'middle', class: dc === 'lane-bg' ? 'seg-label on-clear' : 'seg-label' });
+      S('rect', { x: x + 3, y: rows.a, width: CW - 6, height: RH, rx: 6, class: c.a ? 'c-asst2' : 'lane-bg' }, g);
+      if (c.a) T(g, x + CW / 2, rows.a + RH / 2 + 7, 'speech', { 'text-anchor': 'middle', class: 'seg-label' });
+      T(svg, x + CW / 2, 266, String(i + 1), { 'text-anchor': 'middle', class: 'svg-small' });
+    });
+    S('rect', { x: X0 + k * CW, y: 12, width: CW, height: 240, rx: 8, class: 'hl-ring' }, svg);
+    const c = C[k];
+    $('ck-k').textContent = (k + 1) + ' of 12';
+    $('ck-user').textContent = c.u ? '"' + c.u + '" (' + c.ut + ')' : 'none';
+    $('ck-dec').textContent = c.d;
+    $('ck-txt').textContent = c.a ? '"' + c.a + '"' : 'none';
+  }
+  function stop() { if (timer) { clearInterval(timer); timer = null; } $('ck-play').textContent = 'Play'; }
+  $('ck-prev').addEventListener('click', () => { stop(); k = Math.max(0, k - 1); render(); });
+  $('ck-next').addEventListener('click', () => { stop(); k = Math.min(11, k + 1); render(); });
+  $('ck-play').addEventListener('click', () => {
+    if (timer) { stop(); return; }
+    if (k >= 11) k = 0;
+    $('ck-play').textContent = 'Pause';
+    render();
+    timer = setInterval(() => {
+      if (!root.closest('.slide').classList.contains('active') || k >= 11) { stop(); return; }
+      k++; render();
+    }, 1000);
+  });
+  Deck.onReset(root, () => { stop(); k = 0; render(); });
+  render();
+})();
+
+/* 7. Eq. 1 symbols */
+(function () {
+  const root = $('w-eq1'); if (!root) return;
+  const svg = $('eq1-svg');
+  const D = {
+    s: { n: 's_k', m: 'The frontend state before chunk k. It holds the model context, the partial output, and admitted replies that wait for delivery.', e: 'The dialogue so far, plus a backend reply that the model did not speak yet.', u: 'No' },
+    x: { n: 'x_k^m', m: 'The media input of chunk k. For the audio frontend it is u_k. For the omni frontend it is (u_k, v_k). v_k is empty when no frame is available.', e: 'One second of microphone audio and one video frame.', u: 'Not an output' },
+    b: { n: 'b_k', m: 'Private reply text from the harness. It enters before the assistant output of chunk k.', e: '"Today the restricted tail numbers are 2 and 7."', u: 'No. The frontend speaks it later, as Y_k.' },
+    eta: { n: 'η_k', m: 'Runtime feedback. It records causal events, for example playback acknowledgments.', e: 'The Talker confirms that chunk 12 of speech was played.', u: 'Not an output' },
+    F: { n: 'F_m', m: 'Streaming decoding and runtime scheduling for frontend m. It keeps the causal order of input and output inside each chunk.', e: 'The Omni or the Audio frontend.', u: 'Not applicable' },
+    s1: { n: 's_{k+1}', m: 'The state after chunk k. The next chunk starts from it.', e: 'The same context, plus the new chunk.', u: 'No' },
+    c: { n: 'c_k', m: 'The interaction-control token: listen, speak, or end of turn.', e: '<|speak|>', u: 'No' },
+    Y: { n: 'Y_k', m: 'Foreground text. The Talker turns it into speech.', e: '"Let me check the rules for today."', u: 'Yes' },
+    Dd: { n: 'D_k', m: 'Delegation text. It can extend across many chunks. The host hides it.', e: '<delegate> Find the Beijing tail-number rule for today. </delegate>', u: 'No' },
+    Ss: { n: 'S_k', m: 'Speech tokens for this chunk. They become the waveform.', e: 'About 25 S3 tokens for one second of speech.', u: 'Yes' }
+  };
+  const nodes = [
+    { id: 's', x: 20, y: 30, base: 's', sub: 'k' },
+    { id: 'x', x: 20, y: 115, base: 'x', sub: 'k', sup: 'm' },
+    { id: 'b', x: 20, y: 200, base: 'b', sub: 'k' },
+    { id: 'eta', x: 20, y: 285, base: 'η', sub: 'k' },
+    { id: 'F', x: 340, y: 115, base: 'F', sub: 'm', w: 200, h: 170 },
+    { id: 's1', x: 680, y: 0, base: 's', sub: 'k+1' },
+    { id: 'c', x: 680, y: 76, base: 'c', sub: 'k' },
+    { id: 'Y', x: 680, y: 152, base: 'Y', sub: 'k' },
+    { id: 'Dd', x: 680, y: 228, base: 'D', sub: 'k' },
+    { id: 'Ss', x: 680, y: 304, base: 'S', sub: 'k' }
+  ];
+  let sel = 'b';
+  const els = {};
+  function build() {
+    clear(svg);
+    nodes.forEach(n => {
+      if (n.id === 'F') return;
+      const w = 200, h = 64;
+      const fromLeft = n.x < 300;
+      const x1 = fromLeft ? n.x + w : 540, y1 = fromLeft ? n.y + h / 2 : 200;
+      const x2 = fromLeft ? 340 : n.x, y2 = fromLeft ? 200 : n.y + h / 2;
+      S('path', { d: 'M' + x1 + ' ' + y1 + ' C ' + ((x1 + x2) / 2) + ' ' + y1 + ', ' + ((x1 + x2) / 2) + ' ' + y2 + ', ' + x2 + ' ' + y2, class: 'edge' }, svg);
+    });
+    nodes.forEach(n => {
+      const w = n.w || 200, h = n.h || 64;
+      const g = S('g', { class: 'node', tabindex: 0, role: 'button', 'aria-label': D[n.id].n }, svg);
+      S('rect', { x: n.x, y: n.y, width: w, height: h, rx: 10 }, g);
+      const t = S('text', { x: n.x + w / 2, y: n.y + h / 2 + 10, 'text-anchor': 'middle', style: 'font-size:30px;font-style:italic' }, g);
+      t.appendChild(document.createTextNode(n.base));
+      if (n.sup) { const sp = S('tspan', { 'baseline-shift': 'super', style: 'font-size:20px' }, t); sp.textContent = n.sup; }
+      const sb = S('tspan', { 'baseline-shift': 'sub', style: 'font-size:20px' }, t); sb.textContent = n.sub;
+      if (n.id === 'F') T(g, n.x + w / 2, n.y + h - 24, 'one step', { 'text-anchor': 'middle', class: 'svg-small' });
+      if (['Y', 'Ss'].includes(n.id)) T(g, n.x + w - 12, n.y + 24, 'user', { 'text-anchor': 'end', class: 'svg-small' });
+      g.addEventListener('click', () => { sel = n.id; render(); });
+      g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sel = n.id; render(); } });
+      els[n.id] = g;
+    });
+  }
+  function render() {
+    Object.keys(els).forEach(id => els[id].classList.toggle('on', id === sel));
+    const d = D[sel];
+    $('eq1-name').textContent = d.n; $('eq1-mean').textContent = d.m; $('eq1-ex').textContent = d.e; $('eq1-user').textContent = d.u;
+  }
+  Deck.onReset(root, () => { sel = 'b'; render(); });
+  build(); render();
+})();
+
+/* 8. Stream serialization */
+(function () {
+  const root = $('w-ser'); if (!root) return;
+  const svg = $('ser-svg'), delay = $('ser-delay');
+  const FIRST = 5, LAST = 18, NCOL = LAST - FIRST + 1;
+  const X0 = 200, CW = (1630 - X0) / NCOL;
+  const rows = [['v', 'Video'], ['a', 'Audio'], ['st', 'Status'], ['as', 'Assistant'], ['bg', 'Background']];
+  const RY = { v: 10, a: 66, st: 122, as: 178, bg: 234 }, RH = 48;
+  let k = 5;
+  const U_LISTEN = '<unit> V A → <|listen|> </unit>';
+  function info(c, R) {
+    if (c === 6) return { st: 'speak', as: 'text', unit: '<unit> V A → <|speak|> T <|chunk_eos|><|turn_eos|> </unit>', hear: '"OK, let me check the rules for today."', hid: 'nothing' };
+    if (c === 7) return { st: 'speak', as: 'delegate', unit: '<unit> V A → <|speak|> <delegate> T </delegate><|chunk_eos|><|turn_eos|> </unit>', hear: 'silence', hid: '<delegate> Find the Beijing tail-number rule for today. Check tail 7. </delegate>' };
+    if (c === R) return { st: 'speak', as: 'text', bg: 'backend', unit: '<unit> V A <backend> T </backend> → <|speak|> T <|chunk_eos|><|turn_eos|> </unit>', hear: '"Today the restricted tails are 2 and 7. Tail 7 cannot drive inside the Fifth Ring Road, 7:00 to 20:00."', hid: '<backend> result text </backend> is input, not a target' };
+    if (c > 7 && c < R) return { st: 'listen', bg: 'run', unit: U_LISTEN, hear: 'silence, or other replies', hid: 'The task runs. It adds no result tokens yet.' };
+    return { st: 'listen', unit: U_LISTEN, hear: c === 5 ? 'the end of the question' : 'silence', hid: 'nothing' };
+  }
+  function render() {
+    const R = 7 + (+delay.value);
+    $('ser-delay-v').textContent = delay.value + ' chunks';
+    clear(svg);
+    rows.forEach(([r, l]) => T(svg, X0 - 14, RY[r] + RH / 2 + 8, l, { 'text-anchor': 'end', class: 'svg-label' }));
+    for (let c = FIRST; c <= LAST; c++) {
+      const x = X0 + (c - FIRST) * CW, f = info(c, R), w = CW - 6;
+      S('rect', { x: x + 3, y: RY.v, width: w, height: RH, rx: 5, class: 'lane-bg' }, svg);
+      T(svg, x + CW / 2, RY.v + RH / 2 + 7, 'V', { 'text-anchor': 'middle', class: 'svg-mono' });
+      S('rect', { x: x + 3, y: RY.a, width: w, height: RH, rx: 5, class: c === 5 ? 'c-user' : 'lane-bg' }, svg);
+      T(svg, x + CW / 2, RY.a + RH / 2 + 7, 'A', { 'text-anchor': 'middle', class: c === 5 ? 'seg-label' : 'svg-mono' });
+      S('rect', { x: x + 3, y: RY.st, width: w, height: RH, rx: 5, class: f.st === 'speak' ? 'c-asst' : 'lane-bg' }, svg);
+      T(svg, x + CW / 2, RY.st + RH / 2 + 7, f.st, { 'text-anchor': 'middle', class: f.st === 'speak' ? 'seg-label' : 'seg-label on-clear' });
+      if (f.as) {
+        S('rect', { x: x + 3, y: RY.as, width: w, height: RH, rx: 5, class: f.as === 'delegate' ? 'c-hid' : 'c-asst2' }, svg);
+        T(svg, x + CW / 2, RY.as + RH / 2 + 7, f.as, { 'text-anchor': 'middle', class: 'seg-label' });
+      } else S('rect', { x: x + 3, y: RY.as, width: w, height: RH, rx: 5, class: 'lane-bg' }, svg);
+      S('rect', { x: x + 3, y: RY.bg, width: w, height: RH, rx: 5, class: f.bg === 'backend' ? 'c-bg' : f.bg === 'run' ? 'c-bg-run' : 'lane-bg' }, svg);
+      if (f.bg === 'backend') T(svg, x + CW / 2, RY.bg + RH / 2 + 7, 'backend', { 'text-anchor': 'middle', class: 'seg-label' });
+      T(svg, x + CW / 2, 314, 'chunk ' + c, { 'text-anchor': 'middle', class: 'svg-small' });
+    }
+    S('rect', { x: X0 + (k - FIRST) * CW, y: 4, width: CW, height: 288, rx: 8, class: 'hl-ring' }, svg);
+    const f = info(k, R);
+    $('ser-unit').textContent = 'chunk ' + k + ':  ' + f.unit;
+    $('ser-hear').textContent = f.hear;
+    $('ser-hid').textContent = f.hid;
+  }
+  $('ser-prev').addEventListener('click', () => { k = Math.max(FIRST, k - 1); render(); });
+  $('ser-next').addEventListener('click', () => { k = Math.min(LAST, k + 1); render(); });
+  delay.addEventListener('input', render);
+  Deck.onReset(root, () => { k = 5; delay.value = 7; render(); });
+  render();
+})();
+
+/* 10. Speech pacing, Eq. 2 */
+(function () {
+  const root = $('w-pace'); if (!root) return;
+  const back = $('pc-back'), spt = $('pc-spt'), tl = $('pc-time'), bars = $('pc-bars');
+  const words = ['Aim', 'for', 'five', 'to', 'seven', 'hours', 'a', 'day,', 'and', 'take'];
+  function render() {
+    const tau = +back.value, s = +spt.value;
+    $('pc-back-v').textContent = tau.toFixed(2) + ' s';
+    $('pc-spt-v').textContent = s.toFixed(2) + ' s';
+    const dur = words.map(w => s * (0.7 + 0.1 * w.length));
+    const D = [0]; dur.forEach((d, i) => D.push(D[i] + d));
+    const err = D.map(d => Math.abs(tau + d - 1));
+    let n = 0; err.forEach((e, i) => { if (e < err[n]) n = i; });
+    // Timeline
+    clear(tl);
+    const X0 = 40, X1 = 900, TM = 2.5, x = t => X0 + t * (X1 - X0) / TM;
+    S('line', { x1: X0, x2: X1, y1: 100, y2: 100, class: 'axis-line' }, tl);
+    [0, 0.5, 1, 1.5, 2, 2.5].forEach(t => { S('line', { x1: x(t), x2: x(t), y1: 95, y2: 105, class: 'axis-line' }, tl); T(tl, x(t), 130, t + ' s', { 'text-anchor': 'middle', class: 'svg-small' }); });
+    if (tau > 0) { S('rect', { x: x(0), y: 40, width: x(tau) - x(0), height: 46, rx: 4, class: 'c-block' }, tl); if (tau > 0.4) T(tl, (x(0) + x(tau)) / 2, 70, 'earlier speech', { 'text-anchor': 'middle', class: 'seg-label on-clear' }); }
+    if (n > 0) { S('rect', { x: x(tau), y: 40, width: x(tau + D[n]) - x(tau), height: 46, rx: 4, class: 'c-asst' }, tl); T(tl, (x(tau) + x(tau + D[n])) / 2, 70, 'new text', { 'text-anchor': 'middle', class: 'seg-label' }); }
+    S('line', { x1: x(1), x2: x(1), y1: 20, y2: 108, class: 'thr-line' }, tl);
+    T(tl, x(1) + 8, 30, 't_k', { class: 'svg-mono' });
+    // Bars
+    clear(bars);
+    const BX0 = 70, bw = (900 - BX0) / D.length, H = 220, maxE = 2.5;
+    T(bars, 10, 24, '|error| in seconds for each candidate n', { class: 'svg-small' });
+    err.forEach((e, i) => {
+      const h = Math.max(2, Math.min(e, maxE) / maxE * (H - 50));
+      S('rect', { x: BX0 + i * bw + 8, y: H - h, width: bw - 16, height: h, rx: 3, class: i === n ? 'bar-ours' : 'bar-other' }, bars);
+      T(bars, BX0 + i * bw + bw / 2, H - h - 8, e.toFixed(2), { 'text-anchor': 'middle', class: 'svg-small' });
+      T(bars, BX0 + i * bw + bw / 2, H + 28, 'n=' + i, { 'text-anchor': 'middle', class: i === n ? 'svg-label strong' : 'svg-small' });
+    });
+    $('pc-left').textContent = (1 - tau).toFixed(2) + ' s';
+    $('pc-n').textContent = n;
+    $('pc-txt').textContent = n ? '"' + words.slice(0, n).join(' ') + '"' : 'none, speech lags';
+  }
+  back.addEventListener('input', render); spt.addEventListener('input', render);
+  Deck.onReset(root, () => { back.value = 0.3; spt.value = 0.22; render(); });
+  render();
+})();
+
+/* 12. Overlap handling */
+(function () {
+  const root = $('w-ovl'); if (!root) return;
+  const svg = $('ovl-svg');
+  const E = {
+    bc: { label: '"Right, right."', kind: 'keep', tok: '<|speak|> continues', dup: 'Continue speaking', del: 'None. The frontend keeps the request.', uns: 'Kept', next: '"...take a break every two hours, plus lunch..."' },
+    other: { label: 'Talks to a friend: "Pass me the map?"', kind: 'keep', tok: '<|speak|> continues', dup: 'Continue speaking', del: 'None. Other-directed speech makes no new route.', uns: 'Kept', next: '"...take a break every two hours, plus lunch..."' },
+    bgs: { label: 'Background TV speech', kind: 'keep', tok: '<|speak|> continues', dup: 'Continue speaking', del: 'None. Background speech makes no new route.', uns: 'Kept', next: '"...take a break every two hours, plus lunch..."' },
+    corr: { label: '"No, the trip is three days, not a week."', kind: 'repair', tok: '<|turn_eos|>, then <|speak|> with a revised plan', dup: 'Stop, then repair and update', del: 'Cancel dependent work and plan again', uns: 'Discarded, then generated again', next: '"For three days, drive about six hours each day..."' },
+    redir: { label: '"What should each day look like for meals?"', kind: 'repair', tok: '<|turn_eos|>, then <|speak|> with a new answer', dup: 'Redirect to the follow-up request', del: 'None. The frontend can answer it.', uns: 'Discarded', next: '"Start after breakfast, drive two hours, then take a short break..."' },
+    stop: { label: '"Stop, that is enough."', kind: 'stop', tok: '<|turn_eos|>, then <|listen|>', dup: 'Stop and reject the rest', del: 'None', uns: 'Discarded', next: 'none' },
+    tool: { label: '"Also check the weather on the route."', kind: 'tool', tok: '<|speak|> ... <delegate> q </delegate> inside the same turn', dup: 'Continue, with a short acknowledgment', del: 'Route to the harness. Run it in the background.', uns: 'Kept', next: '"...I will check the weather too. Take a break every two hours..."' }
+  };
+  const ev = choice($('ovl-ev'), Object.keys(E).map(k => ({ v: k, label: E[k].label })), 'bc', render);
+  const X0 = 140, X1 = 960, TM = 12, x = t => X0 + t * (X1 - X0) / TM;
+  const Y = { u: 10, a: 88, b: 166 }, H = 56;
+  function render() {
+    const e = E[ev.v];
+    clear(svg);
+    [['u', 'User'], ['a', 'Assistant'], ['b', 'Background']].forEach(([r, l]) => {
+      S('rect', { x: X0, y: Y[r], width: X1 - X0, height: H, class: 'lane-bg' }, svg);
+      T(svg, X0 - 14, Y[r] + H / 2 + 8, l, { 'text-anchor': 'end', class: 'svg-label' });
+    });
+    S('rect', { x: x(0), y: Y.a, width: x(5) - x(0), height: H, rx: 5, class: 'c-asst' }, svg);
+    T(svg, (x(0) + x(5)) / 2, Y.a + H / 2 + 7, 'played', { 'text-anchor': 'middle', class: 'seg-label' });
+    S('rect', { x: x(5), y: Y.u, width: x(6.5) - x(5), height: H, rx: 5, class: 'c-user' }, svg);
+    T(svg, (x(5) + x(6.5)) / 2, Y.u + H / 2 + 7, 'overlap', { 'text-anchor': 'middle', class: 'seg-label' });
+    if (e.kind === 'keep' || e.kind === 'tool') {
+      S('rect', { x: x(5), y: Y.a, width: x(12) - x(5), height: H, rx: 5, class: 'c-asst2' }, svg);
+      T(svg, (x(5) + x(12)) / 2, Y.a + H / 2 + 7, 'continuation is kept', { 'text-anchor': 'middle', class: 'seg-label' });
+      if (e.kind === 'tool') {
+        S('rect', { x: x(6.8), y: Y.a + 6, width: x(7.6) - x(6.8), height: H - 12, rx: 4, class: 'c-hid' }, svg);
+        S('rect', { x: x(7.6), y: Y.b, width: x(12) - x(7.6), height: H, rx: 5, class: 'c-bg' }, svg);
+        T(svg, (x(7.6) + x(12)) / 2, Y.b + H / 2 + 7, 'weather task runs', { 'text-anchor': 'middle', class: 'seg-label' });
+      }
+    } else {
+      S('rect', { x: x(5), y: Y.a, width: x(12) - x(5), height: H, rx: 5, class: 'c-ghost' }, svg);
+      S('line', { x1: x(5.2), y1: Y.a + 8, x2: x(11.8), y2: Y.a + H - 8, class: 'c-cut' }, svg);
+      T(svg, (x(5) + x(12)) / 2, Y.a - 8, 'old unspoken part', { 'text-anchor': 'middle', class: 'svg-small' });
+      if (e.kind === 'repair') {
+        S('rect', { x: x(7), y: Y.a + 6, width: x(12) - x(7), height: H - 12, rx: 5, class: 'c-asst' }, svg);
+        T(svg, (x(7) + x(12)) / 2, Y.a + H / 2 + 7, 'new reply', { 'text-anchor': 'middle', class: 'seg-label' });
+      }
+    }
+    for (let t = 0; t <= 12; t += 2) T(svg, x(t), 246, t + ' s', { 'text-anchor': 'middle', class: 'svg-small' });
+    $('ovl-tok').textContent = e.tok; $('ovl-dup').textContent = e.dup; $('ovl-del').textContent = e.del;
+    $('ovl-uns').textContent = e.uns + '. Played audio stays unchanged.'; $('ovl-next').textContent = e.next;
+  }
+  Deck.onReset(root, () => { ev.set('bc'); render(); });
+  render();
+})();
+
+/* 14. Memory construction */
+(function () {
+  const root = $('w-memc'); if (!root) return;
+  const W = 64, H = 40, N = 30, rand = Deck.rng(7);
+  const frames = [];
+  for (let i = 0; i < N; i++) {
+    const f = new Float32Array(W * H);
+    for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
+      let v;
+      if (i < 10) { // the camera pans along a street
+        const X = x + 3 * i, col = Math.floor(X / 8), h = 12 + ((col * 7) % 17);
+        v = (y < H - h) ? 210 : (60 + (col % 3) * 35);
+        if (y >= H - h && X % 4 === 1 && y % 4 === 1) v = 235;
+      } else if (i < 20) { // a static room; a short event at frame 15
+        v = y < 26 ? 175 : 120;
+        if (x > 14 && x < 40 && y > 22 && y < 30) v = 70;
+        if (i === 15 && x >= 40 && x < 48 && y >= 12 && y < 20) v = 250;
+      } else { // a corridor; a person walks in and the light dims
+        v = (y < 28 ? 150 : 100) - (i - 20) * 1.5;
+        const px = 4 + 3 * (i - 20);
+        if (x >= px && x < px + 8 && y >= 12 && y < 34) v = 30;
+      }
+      f[y * W + x] = v + (rand() - 0.5) * 4;
+    }
+    frames.push(f);
+  }
+  const B = 8, BX = W / B, BY = H / B;
+  function analyze(match) {
+    const out = [];
+    for (let i = 0; i < N; i++) {
+      if (i === 0) { out.push({ g: Infinity, l: Infinity }); continue; }
+      const cur = frames[i], prev = frames[i - 1]; let sum = 0, mx = 0;
+      const R = match ? 4 : 0;
+      for (let by = 0; by < BY; by++) for (let bx = 0; bx < BX; bx++) {
+        let best = 0, bc = Infinity;
+        for (let dy = -R; dy <= R; dy++) for (let dx = -R; dx <= R; dx++) {
+          let sad = 0, c = 0;
+          for (let y = 0; y < B; y++) for (let x = 0; x < B; x++) {
+            const cx = bx * B + x, cy = by * B + y, px = cx + dx, py = cy + dy;
+            if (px < 0 || py < 0 || px >= W || py >= H) continue;
+            sad += Math.abs(cur[cy * W + cx] - prev[py * W + px]); c++;
+          }
+          const res = sad / c, cost = res + 0.4 * (Math.abs(dx) + Math.abs(dy));
+          if (cost < bc) { bc = cost; best = res; }
+        }
+        sum += bc; if (best > mx) mx = best;
+      }
+      out.push({ g: sum / (BX * BY), l: mx });
+    }
+    return out;
+  }
+  const A = { on: analyze(true), off: analyze(false) };
+  const thumbs = frames.map(f => {
+    const c = document.createElement('canvas'); c.width = W; c.height = H;
+    const cx = c.getContext('2d'), img = cx.createImageData(W, H);
+    for (let p = 0; p < W * H; p++) { const v = Math.max(0, Math.min(255, f[p])); img.data[p * 4] = v; img.data[p * 4 + 1] = v; img.data[p * 4 + 2] = v; img.data[p * 4 + 3] = 255; }
+    cx.putImageData(img, 0, 0);
+    return c;
+  });
+  const strip = $('mc-strip'), ctx = strip.getContext('2d'), bars = $('mc-bars');
+  const thr = $('mc-thr'), match = $('mc-match'), prot = $('mc-prot'), maxd = $('mc-max');
+  const LOCAL = 25, TW = 88, TH = 55, GAP = 8;
+  function render() {
+    const sc = match.checked ? A.on : A.off, t = +thr.value, md = +maxd.value;
+    $('mc-thr-v').textContent = t.toFixed(1);
+    $('mc-max-v').textContent = md === 0 ? 'off' : md;
+    let drops = 0;
+    const dec = sc.map((s, i) => {
+      let why = null;
+      if (i === 0) why = 'first';
+      else if (s.g > t) why = 'score';
+      else if (prot.checked && s.l > LOCAL) why = 'local';
+      else if (md > 0 && drops >= md) why = 'limit';
+      if (why) drops = 0; else drops++;
+      return why;
+    });
+    const css = getComputedStyle(document.documentElement);
+    const accent = css.getPropertyValue('--accent').trim(), bg = css.getPropertyValue('--surface').trim();
+    ctx.clearRect(0, 0, strip.width, strip.height);
+    for (let i = 0; i < N; i++) {
+      const r = Math.floor(i / 15), c = i % 15, x = c * (TW + GAP) + 4, y = r * (TH + GAP) + 2;
+      ctx.drawImage(thumbs[i], x, y, TW, TH);
+      if (dec[i]) { ctx.strokeStyle = accent; ctx.lineWidth = 4; ctx.strokeRect(x + 2, y + 2, TW - 4, TH - 4); }
+      else { ctx.globalAlpha = 0.7; ctx.fillStyle = bg; ctx.fillRect(x, y, TW, TH); ctx.globalAlpha = 1; }
+    }
+    clear(bars);
+    const BH = 104, MAXS = 12, bw = (TW + GAP) / 2;
+    S('line', { x1: 0, x2: 1440, y1: BH, y2: BH, class: 'axis-line' }, bars);
+    sc.forEach((s, i) => {
+      const x = i * bw + 4, v = Math.min(s.g, MAXS), h = Math.max(2, v / MAXS * (BH - 26));
+      S('rect', { x: x + 6, y: BH - h, width: bw - 12, height: h, rx: 3, class: dec[i] ? 'bar-ours' : 'bar-other' }, bars);
+      if (dec[i] && dec[i] !== 'score') T(bars, x + bw / 2, BH - h - 8, dec[i], { 'text-anchor': 'middle', class: 'svg-small' });
+      if (i % 5 === 0) T(bars, x + bw / 2, BH + 22, String(i + 1), { 'text-anchor': 'middle', class: 'svg-small' });
+    });
+    const ty = BH - Math.min(t, MAXS) / MAXS * (BH - 26);
+    S('line', { x1: 0, x2: 1440, y1: ty, y2: ty, class: 'thr-line' }, bars);
+    T(bars, 1436, ty - 8, 'threshold', { 'text-anchor': 'end', class: 'svg-small' });
+    T(bars, 6, 146, 'Change score for each frame (bars above 12 are cut). Frames 1 to 10 pan, frame 11 and frame 21 start new scenes.', { class: 'svg-small' });
+    const kept = dec.filter(Boolean).length;
+    $('mc-kept').textContent = kept + ' of ' + N;
+    $('mc-saved').textContent = Math.round((1 - kept / N) * 100) + '%';
+    $('mc-loc').textContent = dec.filter(d => d === 'local').length;
+    $('mc-lim').textContent = dec.filter(d => d === 'limit').length;
+  }
+  [thr, maxd].forEach(e => e.addEventListener('input', render));
+  [match, prot].forEach(e => e.addEventListener('change', render));
+  $('btn-theme').addEventListener('click', () => setTimeout(render, 0));
+  Deck.onReset(root, () => { thr.value = 4; maxd.value = 4; match.checked = true; prot.checked = true; render(); });
+  render();
+})();
+
+/* 15. Memory retrieval */
+(function () {
+  const root = $('w-memr'); if (!root) return;
+  const C = ['chef', 'plate', 'hand', 'pot', 'waiter', 'table', 'door', 'wall'];
+  const r = Deck.rng(11);
+  function vec(spec, amt) { const v = new Array(8).fill(0); for (const k in spec) v[C.indexOf(k)] += spec[k]; return v.map(x => x + (r() - 0.5) * amt); }
+  const one = n => ({ [n]: 1 });
+  const FR = [
+    ['02:10', 'Chef stirs a pot', ['chef', 'pot', 'hand', 'wall']],
+    ['09:40', 'Waiter sets a table', ['waiter', 'table', 'plate', 'wall']],
+    ['18:05', 'Waiter hands a plate to the chef', ['waiter', 'plate', 'hand', 'chef']],
+    ['18:20', 'Same scene, 1 s later', null],
+    ['25:30', 'Empty corridor', ['door', 'wall', 'wall', 'wall']],
+    ['31:00', 'Chef holds a plate at the pass', ['chef', 'plate', 'hand', 'table']],
+    ['40:15', 'Pot on the stove', ['pot', 'wall', 'table', 'pot']],
+    ['47:50', 'Waiter opens the door', ['waiter', 'door', 'hand', 'wall']]
+  ];
+  const frames = FR.map(f => f[2] ? f[2].map(n => vec(one(n), 0.3)) : null);
+  frames[3] = frames[2].map(t => t.map(x => x + (r() - 0.5) * 0.08));
+  const gen = { chef: .35, plate: .35, hand: .35, pot: .35, waiter: .35, table: .35, door: .35, wall: .35 };
+  const Qdef = {
+    a: { text: 'Who hands the plate to the chef?', toks: [['who', { chef: .7, waiter: .7 }], ['hands', { hand: 1 }], ['plate', { plate: 1 }], ['chef', { chef: 1 }]] },
+    b: { text: 'What is in the pot?', toks: [['what', gen], ['is in', gen], ['pot', { pot: 1 }]] }
+  };
+  const QV = { a: Qdef.a.toks.map(([n, s]) => [n, vec(s, 0.1)]), b: Qdef.b.toks.map(([n, s]) => [n, vec(s, 0.1)]) };
+  const cos = (a, b) => { let d = 0, na = 0, nb = 0; for (let i = 0; i < a.length; i++) { d += a[i] * b[i]; na += a[i] * a[i]; nb += b[i] * b[i]; } return d / Math.sqrt(na * nb); };
+  const med = a => { const s = [...a].sort((x, y) => x - y), m = s.length >> 1; return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2; };
+  const mean = ts => ts[0].map((_, i) => ts.reduce((s, t) => s + t[i], 0) / ts.length);
+  const fe = frames.map(mean);
+  const lam = $('mr-lam'), kk = $('mr-k'), mad = $('mr-mad');
+  const q = choice($('mr-q'), [{ v: 'a', label: Qdef.a.text }, { v: 'b', label: Qdef.b.text }], 'a', render);
+  function render() {
+    const L = +lam.value, K = +kk.value;
+    $('mr-lam-v').textContent = L.toFixed(2); $('mr-k-v').textContent = K;
+    const qt = QV[q.v];
+    const Sm = qt.map(([, v]) => frames.map(f => Math.max(...f.map(t => cos(v, t)))));
+    const md = Sm.map(row => { const m = med(row); return med(row.map(x => Math.abs(x - m))); });
+    const tot = md.reduce((a, b) => a + b, 0);
+    const w = mad.checked ? md.map(x => x / tot) : md.map(() => 1 / md.length);
+    const R = frames.map((_, f) => Sm.reduce((s, row, j) => s + w[j] * row[f], 0));
+    const cand = R.map((x, i) => i).sort((a, b) => R[b] - R[a]).slice(0, 5);
+    const nov = {}, sc = {};
+    cand.forEach((f, ri) => { nov[f] = ri === 0 ? 1 : 1 - Math.max(...cand.slice(0, ri).map(g => cos(fe[f], fe[g]))); });
+    const rmax = R[cand[0]], rmin = R[cand[cand.length - 1]];
+    cand.forEach(f => { const rn = (R[f] - rmin) / ((rmax - rmin) || 1); sc[f] = (1 - L) * rn + L * nov[f]; });
+    const sel = [...cand].sort((a, b) => sc[b] - sc[a]).slice(0, K);
+    const box = $('mr-cards'); box.innerHTML = '';
+    FR.forEach((f, i) => {
+      const d = document.createElement('div');
+      const isC = cand.includes(i), isS = sel.includes(i);
+      d.className = 'fcard' + (isS ? ' sel' : '') + (isC ? '' : ' out');
+      const bar = (lab, v, cls) => '<div class="mini"><span>' + lab + '</span><span class="track"><span class="fill ' + cls + '" style="width:' + Math.round(Math.max(0, Math.min(1, v)) * 100) + '%"></span></span><span>' + v.toFixed(2) + '</span></div>';
+      d.innerHTML = '<span class="ts">' + f[0] + '</span><span>' + f[1] + '</span>' +
+        bar('Relevance', R[i], '') +
+        (isC ? bar('Novelty', nov[i], 'nov') + bar('Score', sc[i], 'sc') : '<span class="muted">Not a candidate</span>') +
+        (isS ? '<span class="tag">Selected</span>' : '');
+      box.appendChild(d);
+    });
+    $('mr-w').innerHTML = 'Token weights: ' + qt.map(([n], j) => n + ' <b>' + w[j].toFixed(2) + '</b>').join('&nbsp;&nbsp; ');
+    const ctxEl = $('mr-ctx'); ctxEl.innerHTML = '<span>Context:</span>';
+    [...sel].sort((a, b) => a - b).forEach(i => { const s = document.createElement('span'); s.className = 'chip acc'; s.textContent = FR[i][0] + ' + audio'; ctxEl.appendChild(s); });
+    ['recent window', 'query'].forEach(t => { const s = document.createElement('span'); s.className = 'chip'; s.textContent = t; ctxEl.appendChild(s); });
+  }
+  [lam, kk].forEach(e => e.addEventListener('input', render));
+  mad.addEventListener('change', render);
+  Deck.onReset(root, () => { lam.value = 0.2; kk.value = 3; mad.checked = true; q.set('a'); render(); });
+  render();
+})();
+
+/* 16. Architecture */
+(function () {
+  const root = $('w-arch'); if (!root) return;
+  const svg = $('arch-svg');
+  const P = {
+    vid: { n: 'Video frames', x: 20, y: 40, w: 220, h: 80, role: 'The visual input stream.', i: 'Camera or video. Evaluation samples 1 frame per second, at most 128 frames, about 448 x 448 pixels.', o: 'Frames for the vision encoder and for the memory gate.', u: 'Omni only' },
+    aud: { n: 'Audio stream', x: 20, y: 230, w: 220, h: 80, role: 'The audio input stream.', i: 'Microphone audio, converted to mono at 16 kHz, in one-second chunks.', o: 'Audio for the audio encoder.', u: 'Omni and Audio' },
+    sig: { n: 'SigLIP2', x: 290, y: 40, w: 220, h: 80, role: 'The vision encoder (a ViT).', i: 'The frame of the current chunk.', o: 'Projected visual tokens V. The paper does not give the token count for each frame.', u: 'Omni only. The Audio model removes this branch.' },
+    whi: { n: 'Whisper-Medium', x: 290, y: 230, w: 220, h: 80, role: 'The streaming audio encoder.', i: 'One second of 16 kHz audio.', o: 'Projected audio features A, about 10 for each second.', u: 'Omni and Audio' },
+    mem: { n: 'Memory module', x: 290, y: 420, w: 220, h: 90, role: 'Training-free long-video memory. It gates, stores, and retrieves frames.', i: 'Sampled frames, audio, and the query.', o: 'Retrieved frames with their audio, in time order, before the recent window.', u: 'Omni only' },
+    llm: { n: 'Qwen3-8B Thinker', x: 560, y: 150, w: 210, h: 200, role: 'The language backbone. It predicts control, text, and delegate tokens.', i: 'Interleaved V and A tokens for each unit, plus backend text.', o: 'c_k, Y_k, D_k, and hidden states H.', u: 'Omni and Audio. Post-training updates only the Thinker.' },
+    har: { n: 'Delegate harness', x: 560, y: 430, w: 210, h: 80, role: 'Runs delegated tasks in the background.', i: 'Delegate text D_k from the Thinker.', o: 'A polished backend message for a later chunk.', u: 'Omni and Audio' },
+    tlk: { n: 'S3 token head', x: 800, y: 150, w: 210, h: 90, role: 'The Talker. It predicts discrete S3 speech tokens.', i: 'Thinker text and hidden states.', o: 'S3 speech tokens, about 25 for each second.', u: 'Omni and Audio. It stays fixed in post-training.' },
+    dec: { n: 'Flow decoder', x: 800, y: 290, w: 210, h: 90, role: 'A streaming flow-matching decoder.', i: 'S3 tokens and reference audio from the system prompt.', o: 'Waveform chunks at 24 kHz.', u: 'Omni and Audio' }
+  };
+  const E = [['vid', 'sig'], ['aud', 'whi'], ['sig', 'llm'], ['whi', 'llm'], ['vid', 'mem'], ['mem', 'llm'], ['llm', 'har'], ['llm', 'tlk'], ['tlk', 'dec']];
+  let sel = 'llm';
+  const els = {};
+  const c = k => ({ x: P[k].x + P[k].w / 2, y: P[k].y + P[k].h / 2 });
+  E.forEach(([a, b]) => {
+    const A = P[a], Bn = P[b];
+    let x1, y1, x2, y2;
+    if (Bn.x > A.x + A.w - 1) { x1 = A.x + A.w; y1 = c(a).y; x2 = Bn.x; y2 = c(b).y; }
+    else { x1 = c(a).x; y1 = A.y + (Bn.y > A.y ? A.h : 0); x2 = c(b).x; y2 = Bn.y + (Bn.y > A.y ? 0 : Bn.h); }
+    S('path', { d: 'M' + x1 + ' ' + y1 + ' C ' + ((x1 + x2) / 2) + ' ' + y1 + ', ' + ((x1 + x2) / 2) + ' ' + y2 + ', ' + x2 + ' ' + y2, class: 'edge' }, svg);
+  });
+  Object.keys(P).forEach(k => {
+    const p = P[k];
+    const g = S('g', { class: 'node', tabindex: 0, role: 'button', 'aria-label': p.n }, svg);
+    S('rect', { x: p.x, y: p.y, width: p.w, height: p.h, rx: 10 }, g);
+    T(g, p.x + p.w / 2, p.y + p.h / 2 + 8, p.n, { 'text-anchor': 'middle' });
+    if (p.u.indexOf('Omni only') === 0) T(g, p.x + p.w - 10, p.y + 22, 'Omni', { 'text-anchor': 'end', class: 'svg-small' });
+    g.addEventListener('click', () => { sel = k; render(); });
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sel = k; render(); } });
+    els[k] = g;
+  });
+  T(svg, 20, 585, 'Total size: 9B parameters for each model.', { class: 'svg-small' });
+  function render() {
+    Object.keys(els).forEach(k => els[k].classList.toggle('on', k === sel));
+    const p = P[sel];
+    $('arch-name').textContent = p.n; $('arch-role').textContent = p.role; $('arch-in').textContent = p.i; $('arch-out').textContent = p.o; $('arch-used').textContent = p.u;
+  }
+  Deck.onReset(root, () => { sel = 'llm'; render(); });
+  render();
+})();
+
+/* 17. Harness lifecycle */
+(function () {
+  const root = $('w-har'); if (!root) return;
+  const svg = $('har-svg'), err = $('har-err'), stale = $('har-stale');
+  const REQ = {
+    mm: { label: '"Which book was red?"', cap: 'multimodal', args: '{ question, frozen frames from X_i }' },
+    gen: { label: '"Plan a road trip."', cap: 'general', args: '{ objective, constraints }' },
+    sk: { label: '"Find the Beijing traffic rule."', cap: 'skill: traffic_rules', args: '{ city: "Beijing", tail: 7, date: today }' }
+  };
+  const req = choice($('har-req'), Object.keys(REQ).map(k => ({ v: k, label: REQ[k].label })), 'sk', () => { step = 0; render(); });
+  const BOX = [
+    { id: 'dreq', g: 0, t: 'Delegate request', x: 40, y: 58 },
+    { id: 'gate', g: 0, t: 'Protocol gate', x: 40, y: 124 },
+    { id: 'snap', g: 0, t: 'Frozen snapshot', x: 40, y: 190 },
+    { id: 'work', g: 0, t: 'Create work', x: 300, y: 190 },
+    { id: 'rout', g: 1, t: 'Router', x: 620, y: 58 },
+    { id: 'exec', g: 1, t: 'Executor', x: 620, y: 160 },
+    { id: 'pol', g: 2, t: 'Polish', x: 1080, y: 58 },
+    { id: 'rein', g: 2, t: 'Reintegrate', x: 1080, y: 124 },
+    { id: 'thk', g: 2, t: 'Thinker speaks', x: 1340, y: 124 }
+  ];
+  const STEPS = [
+    { on: ['dreq'], st: null, txt: 'The Thinker writes <delegate> q_i </delegate>. The host hides the span from text and speech.' },
+    { on: ['gate'], st: null, txt: 'The protocol gate checks the request and its identity. One request makes at most one work item.' },
+    { on: ['snap', 'work'], st: 'QUEUED', txt: 'Capture freezes the evidence X_i at the request time (Eq. 4). The work item enters QUEUED.' },
+    { on: ['rout'], st: 'RUNNING', txt: 'The router reads q_i and a short evidence summary z_i. It picks a capability and its arguments (Eq. 5).' },
+    { on: ['exec'], st: 'RUNNING', txt: 'The executor runs and returns a normalized result r_i.', fail: 'The executor fails. The work item ends in FAILED.' },
+    { on: ['pol'], st: 'COMPLETED', txt: 'The adapter polishes r_i into one private <backend> message (Eq. 6). The work item enters COMPLETED.', stale: 'The freshness deadline passed. The harness excludes the stale result from reintegration.' },
+    { on: ['rein'], st: 'DELIVERING', txt: 'The harness reserves the message for the origin session. The work item enters DELIVERING.' },
+    { on: ['thk'], st: 'DELIVERED', txt: 'The frontend picks a time and speaks the reply. Each Talker chunk gets a playback acknowledgment.' }
+  ];
+  const STATES = ['QUEUED', 'RUNNING', 'COMPLETED', 'DELIVERING', 'DELIVERED'];
+  let step = 0;
+  function endStep() { if (err.checked) return 4; if (stale.checked) return 5; return STEPS.length - 1; }
+  function render() {
+    clear(svg);
+    [['Capture', 20, 540], ['Dispatch', 580, 440], ['Return', 1040, 580]].forEach(([n, x, w]) => {
+      S('rect', { x: x, y: 4, width: w, height: 252, rx: 12, class: 'group-bg' }, svg);
+      T(svg, x + 20, 40, n, { class: 'svg-head' });
+    });
+    const s = STEPS[step], end = endStep();
+    const failed = err.checked && step === 4, isStale = stale.checked && !err.checked && step === 5;
+    BOX.forEach(b => {
+      const g = S('g', { class: 'box' + (s.on.includes(b.id) ? ' on' : '') }, svg);
+      S('rect', { x: b.x, y: b.y, width: 230, height: 54, rx: 8 }, g);
+      T(g, b.x + 115, b.y + 35, b.t, { 'text-anchor': 'middle' });
+    });
+    ['multimodal', 'general', 'skill'].forEach((c, i) => {
+      const on = step >= 3 && REQ[req.v].cap.indexOf(c) === 0;
+      const g = S('g', { class: 'box' + (on ? ' on' : (step >= 3 ? ' dim' : '')) }, svg);
+      S('rect', { x: 880, y: 58 + i * 64, width: 140, height: 50, rx: 8 }, g);
+      T(g, 950, 58 + i * 64 + 33, c, { 'text-anchor': 'middle' });
+    });
+    STATES.forEach((n, i) => {
+      const idx = STEPS.findIndex(x => x.st === n);
+      let cls = 'state';
+      if (failed) cls += (n === 'RUNNING' ? ' fail' : (idx < step ? ' done' : ''));
+      else if (s.st === n && !isStale) cls += ' on';
+      else if (idx >= 0 && idx < step) cls += ' done';
+      const g = S('g', { class: cls }, svg);
+      S('rect', { x: 40 + i * 260, y: 266, width: 230, height: 50, rx: 25 }, g);
+      T(g, 155 + i * 260, 298, failed && n === 'RUNNING' ? 'FAILED' : n, { 'text-anchor': 'middle' });
+      if (i < STATES.length - 1) T(svg, 280 + i * 260, 298, '→', { 'text-anchor': 'middle', class: 'svg-label' });
+    });
+    if (isStale) T(svg, 1460, 298, 'excluded: stale', { 'text-anchor': 'middle', class: 'svg-small' });
+    $('har-now').textContent = 'Stage ' + (step + 1) + ' of ' + (end + 1) + '. ' + (failed ? s.fail : isStale ? s.stale : s.txt);
+    $('har-route').textContent = step >= 3 ? REQ[req.v].cap + '  ' + REQ[req.v].args : 'not yet';
+    $('har-next').disabled = step >= end;
+  }
+  $('har-next').addEventListener('click', () => { step = Math.min(endStep(), step + 1); render(); });
+  [err, stale].forEach(e => e.addEventListener('change', () => { step = 0; render(); }));
+  Deck.onReset(root, () => { step = 0; err.checked = false; stale.checked = false; req.set('sk'); render(); });
+  render();
+})();
+
+/* 18. Causal snapshot */
+(function () {
+  const root = $('w-snap'); if (!root) return;
+  const svg = $('sn-svg'), tS = $('sn-t'), dS = $('sn-d');
+  const EV = [
+    { lane: 'u', a: 2, b: 4, t: 'U1', txt: '"We just passed a bakery."' },
+    { lane: 'u', a: 8, b: 10.5, t: 'U2', txt: '"Is that bakery open now?"' },
+    { lane: 'u', a: 14, b: 16, t: 'U3', txt: '"Also, is it far?"' },
+    { lane: 'a', a: 4.5, b: 7, ack: 7.3, t: 'A1', txt: '"Yes, it looked busy."' },
+    { lane: 'a', a: 11, b: 12.5, ack: 12.8, t: 'A2', txt: '"Let me check."' }
+  ];
+  const X0 = 130, X1 = 930, TM = 20, x = t => X0 + t * (X1 - X0) / TM;
+  const Y = { v: 30, u: 120, a: 210 }, H = 60;
+  function render() {
+    const T_ = +tS.value, D = +dS.value, lo = Math.max(0, T_ - D);
+    $('sn-t-v').textContent = T_ + ' s'; $('sn-d-v').textContent = D + ' s';
+    clear(svg);
+    [['v', 'Video'], ['u', 'User'], ['a', 'Assistant']].forEach(([r, l]) => {
+      S('rect', { x: X0, y: Y[r], width: X1 - X0, height: H, class: 'lane-bg' }, svg);
+      T(svg, X0 - 14, Y[r] + H / 2 + 8, l, { 'text-anchor': 'end', class: 'svg-label' });
+    });
+    S('rect', { x: x(lo), y: 18, width: x(T_) - x(lo), height: 264, rx: 6, class: 'hl-ring' }, svg);
+    let frames = 0;
+    for (let t = 0; t < TM; t++) {
+      const inW = t >= lo && t <= T_;
+      if (inW) frames++;
+      S('circle', { cx: x(t + 0.5), cy: Y.v + H / 2, r: 10, class: inW ? 'c-user' : 'bar-dim' }, svg);
+    }
+    const ins = [], outs = [];
+    EV.forEach(e => {
+      let inW;
+      if (e.lane === 'u') inW = e.a < T_ && e.b > lo;
+      else inW = e.ack <= T_ && e.b > lo;
+      const cls = e.lane === 'u' ? 'c-user' : 'c-asst';
+      S('rect', { x: x(e.a), y: Y[e.lane], width: x(e.b) - x(e.a), height: H, rx: 5, class: inW ? cls : 'bar-dim' }, svg);
+      T(svg, (x(e.a) + x(e.b)) / 2, Y[e.lane] + H / 2 + 7, e.t, { 'text-anchor': 'middle', class: inW ? 'seg-label' : 'seg-label on-clear' });
+      if (e.ack) S('line', { x1: x(e.ack), x2: x(e.ack), y1: Y.a + H + 2, y2: Y.a + H + 18, class: 'axis-line' }, svg);
+      const clip = inW && (e.a < lo || e.b > T_) ? ' (clipped)' : '';
+      if (inW) ins.push(e.t + clip);
+      else if (e.lane === 'a' && e.a < T_ && e.ack > T_) outs.push(e.t + ' ' + e.txt + ' has no playback confirmation yet');
+      else if (e.a >= T_) outs.push(e.t + ' comes after T_i');
+      else outs.push(e.t + ' is older than the look-back window');
+    });
+    S('line', { x1: x(T_), x2: x(T_), y1: 10, y2: 290, class: 'thr-line' }, svg);
+    T(svg, x(T_), 318, 'T_i', { 'text-anchor': 'middle', class: 'svg-mono' });
+    T(svg, X0, 340, 'Short ticks: playback acknowledgments', { class: 'svg-small' });
+    for (let t = 0; t <= TM; t += 4) T(svg, x(t), 372, t + ' s', { 'text-anchor': 'middle', class: 'svg-small' });
+    $('sn-in').textContent = frames + ' frames' + (ins.length ? ', ' + ins.join(', ') : '');
+    $('sn-out').textContent = outs.length ? 'Not in the snapshot: ' + outs.join('; ') + '.' : 'All events are in the snapshot.';
+  }
+  [tS, dS].forEach(e => e.addEventListener('input', render));
+  Deck.onReset(root, () => { tS.value = 12; dS.value = 10; render(); });
+  render();
+})();
+
+/* 20. Training data, Table 1 */
+(function () {
+  const root = $('w-data'); if (!root) return;
+  const ROWS = [
+    ['Video: general AV understanding', 936, 'v'], ['Video: visual-proactive duplex', 454, 'v'], ['Video: omni-proactive duplex', 201, 'v'],
+    ['Video: speech-in duplex', 315, 'v'], ['Video: delegate', 95, 'v'],
+    ['Audio: general audio understanding', 470, 'a'], ['Audio: spoken QA', 205, 'a'], ['Audio: speech-only duplex', 100, 'a'], ['Audio: delegate', 90, 'a']
+  ];
+  const m = choice($('dt-model'), [{ v: 'omni', label: 'Realtime-Venus-Omni' }, { v: 'audio', label: 'Realtime-Venus-Audio' }], 'omni', render);
+  function render() {
+    const use = r => m.v === 'omni' || r[2] === 'a';
+    hbars($('dt-svg'), ROWS.map(r => ({ label: r[0], value: r[1], ours: use(r), dim: !use(r) })), { max: 1000, labelW: 470, fmt: v => v + 'k' });
+    const sum = ROWS.filter(use).reduce((s, r) => s + r[1], 0);
+    $('dt-sum').textContent = sum + 'k';
+  }
+  Deck.onReset(root, () => { m.set('omni'); render(); });
+  render();
+})();
+
+/* 21. Video results, Table 2 */
+(function () {
+  const root = $('w-vid'); if (!root) return;
+  const B = ['StreamingBench', 'OVO-Bench', 'ProactiveVideoQA', 'OmniPro', 'WorldSense', 'Daily-Omni', 'OmniVideoBench', 'LVOmniBench'];
+  const OFF = [
+    ['InternVL3.5 (8B)', [60.8, 53.8, 37.5, 12.1, 39.2, 53.4, 35.7, 38.1]],
+    ['Qwen3-VL (8B)', [53.5, 49.8, 43.4, 19.5, 44.0, 45.6, 30.7, 30.2]],
+    ['Qwen3.5 (9B)', [57.0, 55.0, 47.3, 22.7, 45.5, 47.5, 31.1, 32.1]],
+    ['Qwen3-Omni (30B)', [64.3, 61.4, 44.1, 22.6, 49.6, 72.6, 38.4, 39.7]],
+    ['video-SALMONN 2+ (7B)', [59.9, 46.8, 40.4, 22.1, 49.8, 66.1, 35.8, 38.7]],
+    ['AV-Flamingo (7B)', [58.5, 51.5, 34.6, 18.6, 53.2, 69.4, 39.9, 38.0]],
+    ['Gemini-3.5-Flash', [77.3, 71.6, 56.5, 52.4, 67.2, 82.3, 64.6, 58.2]]
+  ];
+  const ON = [
+    ['LiveStar (8B)', [60.2, 38.0, 25.0, 8.3, 36.1, 44.7, 29.3, 32.5]],
+    ['MMDuet2 (3B)', [58.1, 47.6, 34.9, 7.6, 36.9, 50.6, 30.4, 32.1]],
+    ['JoyAI-VL-Interaction (8B)', [63.3, 56.7, 39.1, 18.2, 43.0, 54.1, 36.7, 36.3]],
+    ['MiniCPM-o 4.5 (9B)', [67.9, 60.7, 47.5, 25.6, 54.2, 79.4, 37.7, 36.7]],
+    ['Realtime-Venus-Omni (9B)', [70.2, 64.7, 46.2, 29.0, 54.0, 81.3, 39.2, 38.9]]
+  ];
+  const off = $('vd-off');
+  const b = choice($('vd-b'), B.map((n, i) => ({ v: i, label: n })), 0, render);
+  function render() {
+    const i = +b.v;
+    let rows = ON.map(r => ({ label: r[0], value: r[1][i], ours: OURS.test(r[0]) }));
+    if (off.checked) rows = rows.concat(OFF.map(r => ({ label: r[0] + ', offline', value: r[1][i], dim: true })));
+    rows.sort((p, q) => q.value - p.value);
+    const svg = $('vd-svg');
+    svg.setAttribute('height', off.checked ? 390 : 330);
+    svg.setAttribute('viewBox', '0 0 1640 ' + (off.checked ? 390 : 330));
+    hbars(svg, rows, { max: 100, labelW: 480, fmt: v => v.toFixed(1) });
+  }
+  off.addEventListener('change', render);
+  Deck.onReset(root, () => { off.checked = false; b.set(0); render(); });
+  render();
+})();
+
+/* 22. Audio and spoken QA, Tables 4 and 5 */
+(function () {
+  const root = $('w-aud'); if (!root) return;
+  const B = ['MMAU', 'MMAU-Pro', 'MMAR', 'MMSU', 'AlpacaEval', 'Llama Q.', 'TriviaQA', 'CMMLU'];
+  const M = [
+    ['Fun-Audio-Chat (8B)', [76.6, 58.0, 40.7, 67.8, 4.80, 83.3, 68.1, 67.7]],
+    ['MiniCPM-o 2.6 (7B)', [65.2, 40.5, 48.6, 56.5, 4.42, 78.0, 51.8, 51.4]],
+    ['Baichuan-Omni-1.5 (7B)', [65.6, 42.9, 40.7, 50.6, 4.50, 78.5, 63.0, 58.4]],
+    ['Kimi-Audio (9B)', [68.4, 56.6, 60.8, 59.3, 4.46, 79.3, 62.1, 67.0]],
+    ['Qwen3-Omni (30B-A3B)', [77.5, 61.2, 66.4, 69.0, 4.74, 83.4, 75.9, 47.8]],
+    ['MiMo-Audio (7B)', [74.9, 53.4, 63.6, 61.7, 4.60, 79.7, 52.8, 56.7]],
+    ['Step-Audio2-mini (7B)', [68.2, 47.9, 55.8, 56.8, 4.17, 75.0, 57.7, 67.6]],
+    ['MiniCPM-o 4.5 (9B)', [76.9, 60.0, 65.3, 65.8, 4.81, 81.0, 75.5, 59.2]],
+    ['Realtime-Venus-Omni (9B)', [76.9, 62.0, 65.2, 64.6, 4.75, 83.3, 73.6, 67.5]],
+    ['Realtime-Venus-Audio (9B)', [78.0, 63.2, 65.6, 66.0, 4.81, 83.8, 75.7, 67.8]]
+  ];
+  const b = choice($('au-b'), B.map((n, i) => ({ v: i, label: n })), 0, render);
+  function render() {
+    const i = +b.v, alp = i === 4;
+    const rows = M.map(r => ({ label: r[0], value: r[1][i], ours: OURS.test(r[0]) })).sort((p, q) => q.value - p.value);
+    hbars($('au-svg'), rows, { max: alp ? 5 : 100, labelW: 440, fmt: v => alp ? v.toFixed(2) : v.toFixed(1) });
+  }
+  Deck.onReset(root, () => { b.set(0); render(); });
+  render();
+})();
+
+/* 23. Full-duplex, Table 6 */
+(function () {
+  const root = $('w-fd'); if (!root) return;
+  // Columns: UI_R, UI_S, BC_R, BC_S, TO_R, TO_S, BG_R, BG_S
+  const M = [
+    ['Freeze-Omni', [0.72, 0.12, 0.07, 0.80, 0.58, 0.25, 0.62, 0.25]],
+    ['Moshi', [0.50, 0.26, 0.02, 0.06, 0.20, 0.19, 0.21, 0.07]],
+    ['Gemini 3.1 Live', [0.77, 0.20, 0.02, 0.95, 0.27, 0.66, 0.28, 0.66]],
+    ['GPT-4o', [0.78, 0.10, 0.03, 0.70, 0.91, 0.02, 0.93, 0.04]],
+    ['Joy-Duplex', [0.88, 0.07, 0.01, 0.96, 0.17, 0.72, 0.10, 0.85]],
+    ['MiniCPM-o 4.5', [0.60, 0.36, 0.00, 0.95, 0.18, 0.79, 0.16, 0.82]],
+    ['Realtime-Venus-Omni', [0.60, 0.37, 0.02, 0.92, 0.06, 0.90, 0.12, 0.85]],
+    ['Realtime-Venus-Audio', [0.75, 0.23, 0.00, 0.97, 0.11, 0.88, 0.11, 0.86]]
+  ];
+  const SC = [{ v: 0, label: 'User interruption' }, { v: 1, label: 'User backchannel' }, { v: 2, label: 'Talking to others' }, { v: 3, label: 'Background speech' }];
+  const s = choice($('fd-s'), SC, 0, render);
+  const m = choice($('fd-m'), [{ v: 0, label: 'C_RESPOND' }, { v: 1, label: 'C_RESUME' }], 0, render);
+  function render() {
+    const si = +s.v, mi = +m.v, col = si * 2 + mi;
+    const up = si === 0 ? mi === 0 : mi === 1; // preferred direction
+    const rows = M.map(r => ({ label: r[0], value: r[1][col], ours: OURS.test(r[0]) }))
+      .sort((p, q) => up ? q.value - p.value : p.value - q.value);
+    const svg = $('fd-bars');
+    hbars(svg, rows, { max: 1, labelW: 300, fmt: v => v.toFixed(2) });
+    T(svg, 856, 20, (up ? 'Higher' : 'Lower') + ' is better', { 'text-anchor': 'end', class: 'svg-small' });
+    // Paired dots: interruption C_RESPOND and C_RESUME of a non-interruption scenario
+    const ys = si === 0 ? 1 : si, ycol = ys * 2 + 1;
+    const sc = $('fd-sc'); clear(sc);
+    const LX = 250, RX = 690, top = 70, rh = 44;
+    const px = v => LX + v * (RX - LX);
+    T(sc, 0, 24, 'Circle: interruption C_RESPOND', { class: 'svg-small' });
+    T(sc, 0, 50, 'Square: ' + SC[ys].label.toLowerCase() + ' C_RESUME', { class: 'svg-small' });
+    [0, 0.5, 1].forEach(v => { S('line', { x1: px(v), x2: px(v), y1: top - 8, y2: top + rh * M.length, class: 'grid-line' }, sc); T(sc, px(v), top + rh * M.length + 26, v.toFixed(1), { 'text-anchor': 'middle', class: 'svg-small' }); });
+    M.forEach((r, i) => {
+      const y = top + i * rh + rh / 2, ours = OURS.test(r[0]);
+      const a = r[1][0], b = r[1][ycol];
+      T(sc, LX - 14, y + 7, r[0].replace('Realtime-Venus', 'RT-Venus'), { 'text-anchor': 'end', class: 'svg-label' + (ours ? ' strong' : '') });
+      S('line', { x1: px(Math.min(a, b)), x2: px(Math.max(a, b)), y1: y, y2: y, class: 'axis-line' }, sc);
+      S('circle', { cx: px(a), cy: y, r: 10, class: ours ? 'bar-ours' : 'bar-other' }, sc);
+      S('rect', { x: px(b) - 9, y: y - 9, width: 18, height: 18, class: 'c-bg' }, sc);
+    });
+  }
+  Deck.onReset(root, () => { s.set(0); m.set(0); render(); });
+  render();
+})();
+
+/* 24. Tool use and delegation, Tables 7 and 8 */
+(function () {
+  const root = $('w-tool'); if (!root) return;
+  const M = [
+    ['Cascaded', [80.3, 56.2, 45.0]], ['Gemini 2.5 Live', [78.6, 59.3, 49.0]], ['Gemini 3.1 Live', [81.7, 58.8, 54.0]],
+    ['Grok', [79.7, 54.2, 43.0]], ['Ultravox', [79.4, 51.3, 41.0]], ['GPT-Realtime', [87.6, 68.0, 60.0]],
+    ['NemotronLabs VoiceChat-11B', [82.5, 42.2, 33.0]], ['Realtime-Venus-Omni', [86.0, 53.1, 43.0]], ['Realtime-Venus-Audio', [82.0, 52.2, 42.0]]
+  ];
+  const m = choice($('tl-m'), [{ v: 0, label: 'Tool selection F1' }, { v: 1, label: 'Argument accuracy' }, { v: 2, label: 'Pass@1' }], 0, render);
+  const DG = { cats: [['Overall', ''], ['External', '(recall)'], ['Routine', '(specificity)'], ['Reasoning', '']], omni: [75.93, 68.33, 84.44, 75.00], audio: [68.89, 92.22, 39.44, 75.00] };
+  function drawDG() {
+    const svg = $('dg-svg'); clear(svg);
+    const X0 = 20, gw = 680 / 4, Y0 = 330, HH = 270;
+    S('line', { x1: X0, x2: 690, y1: Y0, y2: Y0, class: 'axis-line' }, svg);
+    DG.cats.forEach((c, i) => {
+      const gx = X0 + i * gw;
+      [['omni', 'bar-ours'], ['audio', 'bar-other']].forEach(([k, cls], j) => {
+        const v = DG[k][i], h = v / 100 * HH, x = gx + 22 + j * 64;
+        S('rect', { x: x, y: Y0 - h, width: 56, height: h, rx: 3, class: cls }, svg);
+        T(svg, x + 28, Y0 - h - 8, v.toFixed(1), { 'text-anchor': 'middle', class: 'svg-small' });
+      });
+      const l1 = c[0], l2 = c[1];
+      T(svg, gx + gw / 2, Y0 + 28, l1, { 'text-anchor': 'middle', class: 'svg-small' });
+      if (l2) T(svg, gx + gw / 2, Y0 + 52, l2, { 'text-anchor': 'middle', class: 'svg-small' });
+    });
+    S('rect', { x: 30, y: 400, width: 22, height: 22, rx: 4, class: 'bar-ours' }, svg);
+    T(svg, 60, 418, 'Omni', { class: 'svg-label' });
+    S('rect', { x: 160, y: 400, width: 22, height: 22, rx: 4, class: 'bar-other' }, svg);
+    T(svg, 190, 418, 'Audio', { class: 'svg-label' });
+  }
+  function render() {
+    const i = +m.v;
+    hbars($('tl-svg'), M.map(r => ({ label: r[0], value: r[1][i], ours: OURS.test(r[0]) })).sort((p, q) => q.value - p.value), { max: 100, labelW: 360, fmt: v => v.toFixed(1) + '%' });
+  }
+  Deck.onReset(root, () => { m.set(0); render(); });
+  drawDG(); render();
+})();
+
+/* 25. Memory ablation, Table 3 */
+(function () {
+  const root = $('w-abl'); if (!root) return;
+  const BINS = [['LVOmniBench', '10-30'], ['LVOmniBench', '30-60'], ['LVOmniBench', '60-90'], ['CGBench', '40-50'], ['CGBench', '50-60'], ['CGBench', '60-65'], ['LongVideoBench', '15-40'], ['LongVideoBench', '40-60']];
+  const D = {
+    mini: { base: [38.58, 38.56, 32.35, 34.27, 36.10, 34.58, 52.89, 55.56], mem: [38.80, 39.89, 38.24, 44.71, 45.37, 43.93, 51.90, 55.56] },
+    rv: { base: [35.48, 42.91, 41.18, 47.84, 46.63, 49.53, 52.89, 57.14], mem: [36.36, 43.10, 47.06, 48.71, 48.31, 50.47, 53.29, 61.90] }
+  };
+  const bb = choice($('ab-bb'), [{ v: 'rv', label: 'Realtime-Venus-Omni' }, { v: 'mini', label: 'MiniCPM-o 4.5' }], 'rv', render);
+  const mem = $('ab-mem');
+  function render() {
+    const svg = $('ab-svg'); clear(svg);
+    const d = D[bb.v], X0 = 70, gw = (1630 - X0) / 8, Y0 = 350, HH = 290, MAX = 70;
+    S('line', { x1: X0, x2: 1630, y1: Y0, y2: Y0, class: 'axis-line' }, svg);
+    [0, 20, 40, 60].forEach(v => { const y = Y0 - v / MAX * HH; S('line', { x1: X0, x2: 1630, y1: y, y2: y, class: 'grid-line' }, svg); T(svg, X0 - 10, y + 7, String(v), { 'text-anchor': 'end', class: 'svg-small' }); });
+    BINS.forEach((b, i) => {
+      const gx = X0 + i * gw;
+      const draw = (v, x, cls) => { const h = v / MAX * HH; S('rect', { x: x, y: Y0 - h, width: 64, height: h, rx: 3, class: cls }, svg); T(svg, x + 32, Y0 - h - 8, v.toFixed(2), { 'text-anchor': 'middle', class: 'svg-small' }); };
+      draw(d.base[i], gx + 24, 'bar-other');
+      if (mem.checked) {
+        draw(d.mem[i], gx + 96, 'bar-ours');
+        const delta = d.mem[i] - d.base[i];
+        T(svg, gx + gw / 2, 40, (delta >= 0 ? '+' : '') + delta.toFixed(2), { 'text-anchor': 'middle', class: 'svg-label strong' });
+      }
+      T(svg, gx + gw / 2, Y0 + 30, b[1] + ' min', { 'text-anchor': 'middle', class: 'svg-small' });
+      if (i === 0 || BINS[i - 1][0] !== b[0]) T(svg, gx + 10, Y0 + 60, b[0], { class: 'svg-label' });
+    });
+    S('rect', { x: 1240, y: 396, width: 22, height: 22, rx: 4, class: 'bar-other' }, svg);
+    T(svg, 1270, 414, 'without memory', { class: 'svg-label' });
+    S('rect', { x: 1440, y: 396, width: 22, height: 22, rx: 4, class: 'bar-ours' }, svg);
+    T(svg, 1470, 414, 'with memory', { class: 'svg-label' });
+  }
+  mem.addEventListener('change', render);
+  Deck.onReset(root, () => { bb.set('rv'); mem.checked = true; render(); });
+  render();
+})();
+</script>
+</body>
+</html>
