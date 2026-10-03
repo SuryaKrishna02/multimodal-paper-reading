@@ -449,7 +449,7 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
     <div class="stack">
       <p>A user asks a question that needs a tool, for example a web search.</p>
       <p>A tool call can take many seconds. A blocking design stops the conversation for that time.</p>
-      <p>The paper keeps the conversation alive while the work runs in the background.</p>
+      <p>Realtime-Venus hands the tool call to a background worker. The assistant keeps listening and talking until the result comes back.</p>
     </div>
     <div class="interactive" id="w-problem">
       <div class="interactive-head">
@@ -466,11 +466,11 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
         <span>Conversation blocked: <b id="pb-block"></b></span>
         <span>Q2 answer starts: <b id="pb-q2r"></b></span>
       </div>
-      <p class="note">Q1: "Can my car with tail number 7 drive in Beijing today?" Q2: "And what is a tail number?"</p>
+      <p class="note">Q1: "Find an Italian restaurant near me that is open now." Q2: "What is the difference between risotto and pasta?"</p>
       <p class="try"><strong>Try:</strong> Select each mode. Move the tool delay slider. Look at the assistant lane.</p>
     </div>
   </div>
-  <p class="sources"><span class="source">Sec 1</span><span class="source">Q1 adapted from Appendix B.2</span></p>
+  <p class="sources"><span class="source">Sec 1</span></p>
 </section>
 
 <!-- 3. Primer: full-duplex -->
@@ -622,7 +622,7 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
 <!-- 8. Serialization -->
 <section class="slide" data-type="interactive" data-title="Stream serialization">
   <h2>Three streams share one clock</h2>
-  <p class="note">User, chunks 1 to 5: "Can my car with tail number 7 drive in Beijing today?" (adapted from Appendix B.2)</p>
+  <p class="note">User, chunks 1 to 5: "Find an Italian restaurant near me that is open now."</p>
   <div class="interactive" id="w-ser">
     <div class="interactive-head">
       <div class="row" style="gap:12px">
@@ -1474,13 +1474,13 @@ const OURS = /Realtime-Venus/;
   const D = {
     s: { n: 's_k', m: 'The frontend state before chunk k. It holds the model context, the partial output, and admitted replies that wait for delivery.', e: 'The dialogue so far, plus a backend reply that the model did not speak yet.', u: 'No' },
     x: { n: 'x_k^m', m: 'The media input of chunk k. For the audio frontend it is u_k. For the omni frontend it is (u_k, v_k). v_k is empty when no frame is available.', e: 'One second of microphone audio and one video frame.', u: 'Not an output' },
-    b: { n: 'b_k', m: 'Private reply text from the harness. It enters before the assistant output of chunk k.', e: '"Today the restricted tail numbers are 2 and 7."', u: 'No. The frontend speaks it later, as Y_k.' },
+    b: { n: 'b_k', m: 'Private reply text from the harness. It enters before the assistant output of chunk k.', e: '"Trattoria Roma is 400 m away. It is open until 23:00."', u: 'No. The frontend speaks it later, as Y_k.' },
     eta: { n: 'η_k', m: 'Runtime feedback. It records causal events, for example playback acknowledgments.', e: 'The Talker confirms that chunk 12 of speech was played.', u: 'Not an output' },
     F: { n: 'F_m', m: 'Streaming decoding and runtime scheduling for frontend m. It keeps the causal order of input and output inside each chunk.', e: 'The Omni or the Audio frontend.', u: 'Not applicable' },
     s1: { n: 's_{k+1}', m: 'The state after chunk k. The next chunk starts from it.', e: 'The same context, plus the new chunk.', u: 'No' },
     c: { n: 'c_k', m: 'The interaction-control token: listen, speak, or end of turn.', e: '<|speak|>', u: 'No' },
-    Y: { n: 'Y_k', m: 'Foreground text. The Talker turns it into speech.', e: '"Let me check the rules for today."', u: 'Yes' },
-    Dd: { n: 'D_k', m: 'Delegation text. It can extend across many chunks. The host hides it.', e: '<delegate> Find the Beijing tail-number rule for today. </delegate>', u: 'No' },
+    Y: { n: 'Y_k', m: 'Foreground text. The Talker turns it into speech.', e: '"Let me look for a place near you."', u: 'Yes' },
+    Dd: { n: 'D_k', m: 'Delegation text. It can extend across many chunks. The host hides it.', e: '<delegate> Find an Italian restaurant near the user that is open now. </delegate>', u: 'No' },
     Ss: { n: 'S_k', m: 'Speech tokens for this chunk. They become the waveform.', e: 'About 25 S3 tokens for one second of speech.', u: 'Yes' }
   };
   const nodes = [
@@ -1542,9 +1542,9 @@ const OURS = /Realtime-Venus/;
   let k = 5;
   const U_LISTEN = '<unit> V A → <|listen|> </unit>';
   function info(c, R) {
-    if (c === 6) return { st: 'speak', as: 'text', unit: '<unit> V A → <|speak|> T <|chunk_eos|><|turn_eos|> </unit>', hear: '"OK, let me check the rules for today."', hid: 'nothing' };
-    if (c === 7) return { st: 'speak', as: 'delegate', unit: '<unit> V A → <|speak|> <delegate> T </delegate><|chunk_eos|><|turn_eos|> </unit>', hear: 'silence', hid: '<delegate> Find the Beijing tail-number rule for today. Check tail 7. </delegate>' };
-    if (c === R) return { st: 'speak', as: 'text', bg: 'backend', unit: '<unit> V A <backend> T </backend> → <|speak|> T <|chunk_eos|><|turn_eos|> </unit>', hear: '"Today the restricted tails are 2 and 7. Tail 7 cannot drive inside the Fifth Ring Road, 7:00 to 20:00."', hid: '<backend> result text </backend> is input, not a target' };
+    if (c === 6) return { st: 'speak', as: 'text', unit: '<unit> V A → <|speak|> T <|chunk_eos|><|turn_eos|> </unit>', hear: '"OK, let me look for a place near you."', hid: 'nothing' };
+    if (c === 7) return { st: 'speak', as: 'delegate', unit: '<unit> V A → <|speak|> <delegate> T </delegate><|chunk_eos|><|turn_eos|> </unit>', hear: 'silence', hid: '<delegate> Find an Italian restaurant near the user that is open now. </delegate>' };
+    if (c === R) return { st: 'speak', as: 'text', bg: 'backend', unit: '<unit> V A <backend> T </backend> → <|speak|> T <|chunk_eos|><|turn_eos|> </unit>', hear: '"I found one. Trattoria Roma is 400 m away. It is open until 23:00."', hid: '<backend> result text </backend> is input, not a target' };
     if (c > 7 && c < R) return { st: 'listen', bg: 'run', unit: U_LISTEN, hear: 'silence, or other replies', hid: 'The task runs. It adds no result tokens yet.' };
     return { st: 'listen', unit: U_LISTEN, hear: c === 5 ? 'the end of the question' : 'silence', hid: 'nothing' };
   }
@@ -1907,7 +1907,7 @@ const OURS = /Realtime-Venus/;
   const REQ = {
     mm: { label: '"Which book was red?"', cap: 'multimodal', args: '{ question, frozen frames from X_i }' },
     gen: { label: '"Plan a road trip."', cap: 'general', args: '{ objective, constraints }' },
-    sk: { label: '"Find the Beijing traffic rule."', cap: 'skill: traffic_rules', args: '{ city: "Beijing", tail: 7, date: today }' }
+    sk: { label: '"Find an open Italian restaurant."', cap: 'skill: place_search', args: '{ cuisine: "Italian", near: user location, open_now: true }' }
   };
   const req = choice($('har-req'), Object.keys(REQ).map(k => ({ v: k, label: REQ[k].label })), 'sk', () => { step = 0; render(); });
   const BOX = [
