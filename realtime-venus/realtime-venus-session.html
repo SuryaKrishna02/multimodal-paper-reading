@@ -355,7 +355,7 @@ table.tbl td code { white-space: nowrap; }
 .pace-ctl .try { font-size: 20px; }
 .pace-mini svg { flex: none; width: 820px; }
 /* Annotated Eq. 3 (slide 14) */
-.goal { font-size: 26px; font-weight: 700; color: var(--ink); max-width: none; }
+.goal { font-size: 26px; font-weight: 700; color: var(--ink); max-width: none; text-align: center; }
 .eq-t.sm { font-size: 46px; }
 .eq-t.sm .sb { font-size: 28px; }
 .mini-th { fill: var(--surface-2); stroke: #2D4CB9; stroke-width: 2; }
@@ -932,7 +932,7 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
 <foreignObject x="1020" y="545" width="660" height="150"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card out" style="border-top-color:#B86E00"><span class="tag" style="color:#B86E00">Fixed during training</span><b>Talker <i>p</i><sub>&#966;</sub>: the speech decoder</b>Predicts the speech tokens of chunk <i>k</i> from <i>H</i>, the text, and its earlier speech tokens. It stays outside the LLM. Training updates only the Thinker.</div></foreignObject>
 <path class="ann-line" style="stroke:#B86E00" d="M1350 545 C1350 523 1410 514 1410 494" marker-end="url(#a3tk)"/>
 </svg>
-  <p class="goal">Training goal: maximize the probability of the recorded replies and turn decisions, given only the past.</p>
+  <p class="goal">Training goal: make the target responses in the training data as likely as possible, given only the past.</p>
   <p class="sources"><span class="source">Sec 4.4</span><span class="source">Eq. 3</span><span class="source">Sec 4.6</span></p>
 </section>
 
