@@ -1128,11 +1128,13 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
   <h2>Capture freezes the evidence at the request time</h2>
   <div class="cols wide-right">
     <div class="stack">
-      <div class="math">\[ X_i = \mathrm{Snap}(\mathcal{B}^{\sigma};\, \kappa_i,\, \Delta) \]</div>
+      <p class="note">Where it sits: the Frozen snapshot step in the Capture stage of slide 20. It runs once for each delegate request.</p>
+      <div class="math">\[ {\color{#4C6EE6}{X_i}} = \mathrm{Snap}({\color{#6B4FBB}{\mathcal{B}^{\sigma}}};\, {\color{#E5583A}{\kappa_i}},\, {\color{#0F8A5F}{\Delta}}) \]</div>
       <ul class="symbols">
-        <li><span class="sym">\( \mathcal{B}^{\sigma} \)</span> The bounded buffer of session \(\sigma\).</li>
-        <li><span class="sym">\( \kappa_i \)</span> The time \(T_i\) of the opening token and the last input at that time.</li>
-        <li><span class="sym">\( \Delta \)</span> The look-back horizon.</li>
+        <li><span class="sym">\( {\color{#4C6EE6}{X_i}} \)</span> The snapshot. Timeline: what is lit inside the blue window.</li>
+        <li><span class="sym">\( {\color{#6B4FBB}{\mathcal{B}^{\sigma}}} \)</span> The bounded buffer of session \(\sigma\). Timeline: the purple lanes.</li>
+        <li><span class="sym">\( {\color{#E5583A}{\kappa_i}} \)</span> \(= (T_i, n_i)\): when the request opened, and the last input seen by then. Timeline: the red line.</li>
+        <li><span class="sym">\( {\color{#0F8A5F}{\Delta}} \)</span> The look-back horizon. Timeline: the green arrow.</li>
       </ul>
       <ul class="points">
         <li class="point"><b>Frozen</b><span>Later observations cannot change \(X_i\).</span></li>
@@ -1144,12 +1146,12 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
         <button class="reset" type="button">Reset</button>
       </div>
       <div class="controls">
-        <label>Request time \(T_i\) <input id="sn-t" type="range" min="5" max="19" step="0.5" value="12" aria-label="Request time"> <span class="mono" id="sn-t-v"></span></label>
-        <label>Look-back \(\Delta\) <input id="sn-d" type="range" min="2" max="14" step="1" value="10" aria-label="Look-back horizon"> <span class="mono" id="sn-d-v"></span></label>
+        <label>Request time \({\color{#E5583A}{T_i}}\) <input id="sn-t" type="range" min="5" max="19" step="0.5" value="12" aria-label="Request time"> <span class="mono" id="sn-t-v"></span></label>
+        <label>Look-back \({\color{#0F8A5F}{\Delta}}\) <input id="sn-d" type="range" min="2" max="14" step="1" value="10" aria-label="Look-back horizon"> <span class="mono" id="sn-d-v"></span></label>
       </div>
       <svg id="sn-svg" class="fig" width="940" height="380" viewBox="0 0 940 380" role="img" aria-label="Event timeline with the snapshot window"></svg>
       <div class="readout">
-        <span>In \(X_i\): <b id="sn-in"></b></span>
+        <span>In \({\color{#4C6EE6}{X_i}}\): <b id="sn-in"></b></span>
       </div>
       <p class="note" id="sn-out"></p>
       <p class="try"><strong>Try:</strong> Move the request time from 12 to 14. Look at the reply "Let me check."</p>
@@ -2185,16 +2187,20 @@ const OURS = /Realtime-Venus/;
     { lane: 'a', a: 11, b: 12.5, ack: 12.8, t: 'A2', txt: '"Let me check."' }
   ];
   const X0 = 130, X1 = 930, TM = 20, x = t => X0 + t * (X1 - X0) / TM;
-  const Y = { v: 30, u: 120, a: 210 }, H = 60;
+  const Y = { v: 66, u: 146, a: 226 }, H = 54;
   function render() {
     const T_ = +tS.value, D = +dS.value, lo = Math.max(0, T_ - D);
     $('sn-t-v').textContent = T_ + ' s'; $('sn-d-v').textContent = D + ' s';
     clear(svg);
     [['v', 'Video'], ['u', 'User'], ['a', 'Assistant']].forEach(([r, l]) => {
-      S('rect', { x: X0, y: Y[r], width: X1 - X0, height: H, class: 'lane-bg' }, svg);
+      S('rect', { x: X0, y: Y[r], width: X1 - X0, height: H, class: 'lane-bg', style: 'stroke:#6B4FBB;stroke-width:2' }, svg);
       T(svg, X0 - 14, Y[r] + H / 2 + 8, l, { 'text-anchor': 'end', class: 'svg-label' });
     });
-    S('rect', { x: x(lo), y: 18, width: x(T_) - x(lo), height: 264, rx: 6, class: 'hl-ring' }, svg);
+    S('rect', { x: x(lo), y: 54, width: x(T_) - x(lo), height: 238, rx: 6, class: 'hl-ring' }, svg);
+    const dA = { stroke: '#0F8A5F', 'stroke-width': 3 };
+    S('line', Object.assign({ x1: x(lo), x2: x(T_), y1: 40, y2: 40 }, dA), svg);
+    [x(lo), x(T_)].forEach(xx => S('line', Object.assign({ x1: xx, x2: xx, y1: 31, y2: 49 }, dA), svg));
+    T(svg, (x(lo) + x(T_)) / 2, 22, '\u0394 = ' + D + ' s', { 'text-anchor': 'middle', class: 'svg-label', style: 'fill:#0F8A5F' });
     let frames = 0;
     for (let t = 0; t < TM; t++) {
       const inW = t >= lo && t <= T_;
@@ -2213,15 +2219,17 @@ const OURS = /Realtime-Venus/;
       const clip = inW && (e.a < lo || e.b > T_) ? ' (clipped)' : '';
       if (inW) ins.push(e.t + clip);
       else if (e.lane === 'a' && e.a < T_ && e.ack > T_) outs.push(e.t + ' ' + e.txt + ' has no playback confirmation yet');
-      else if (e.a >= T_) outs.push(e.t + ' comes after T_i');
+      else if (e.a >= T_) outs.push(e.t + ' comes after \\(T_i\\)');
       else outs.push(e.t + ' is older than the look-back window');
     });
-    S('line', { x1: x(T_), x2: x(T_), y1: 10, y2: 290, class: 'thr-line' }, svg);
-    T(svg, x(T_), 318, 'T_i', { 'text-anchor': 'middle', class: 'svg-mono' });
-    T(svg, X0, 340, 'Short ticks: playback acknowledgments', { class: 'svg-small' });
-    for (let t = 0; t <= TM; t += 4) T(svg, x(t), 372, t + ' s', { 'text-anchor': 'middle', class: 'svg-small' });
+    S('line', { x1: x(T_), x2: x(T_), y1: 46, y2: 302, class: 'thr-line' }, svg);
+    const tL = T(svg, x(T_), 326, 'T', { 'text-anchor': 'middle', class: 'svg-label', style: 'fill:#E5583A;font-style:italic' });
+    S('tspan', { 'font-size': 15, dy: 5 }, tL).textContent = 'i';
+    T(svg, X0, 348, 'Short ticks: playback acknowledgments', { class: 'svg-small' });
+    for (let t = 0; t <= TM; t += 4) T(svg, x(t), 374, t + ' s', { 'text-anchor': 'middle', class: 'svg-small' });
     $('sn-in').textContent = frames + ' frames' + (ins.length ? ', ' + ins.join(', ') : '');
-    $('sn-out').textContent = outs.length ? 'Not in the snapshot: ' + outs.join('; ') + '.' : 'All events are in the snapshot.';
+    $('sn-out').innerHTML = outs.length ? 'Not in the snapshot: ' + outs.join('; ') + '.' : 'All events are in the snapshot.';
+    typeset($('sn-out'));
   }
   [tS, dS].forEach(e => e.addEventListener('input', render));
   Deck.onReset(root, () => { tS.value = 12; dS.value = 10; render(); });
