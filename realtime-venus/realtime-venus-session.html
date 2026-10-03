@@ -282,6 +282,11 @@ svg text { font-family: var(--font-body); }
 .box text { fill: var(--ink); font-size: 22px; }
 .box.on rect { stroke: var(--accent); stroke-width: 4; }
 .box.dim { opacity: 0.35; }
+.box .svg-small { fill: var(--muted); font-size: 19px; }
+.box.hid rect { stroke: #CC79A7; stroke-dasharray: 7 5; }
+.box.out rect { fill: var(--accent); stroke: var(--accent); }
+.box.out text { fill: #FFFFFF; }
+.box.out .svg-small { fill: #E3E9FC; }
 .group-bg { fill: var(--surface); stroke: var(--line); stroke-width: 1.5; }
 .edge { stroke: var(--muted); stroke-width: 2.5; fill: none; }
 .edge.hid { stroke: #CC79A7; stroke-dasharray: 7 5; }
@@ -530,27 +535,35 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
   <div class="cols wide-right">
     <ul class="points">
       <li class="point"><b>Base model</b><span>MiniCPM-o 4.5, an open 9B model.</span></li>
-      <li class="point"><b>Thinker</b><span>The language model. It reads audio and video tokens and writes text.</span></li>
-      <li class="point"><b>Talker</b><span>It reads the <span class="term" tabindex="0" data-def="The internal vectors of the language model for each token. They carry meaning and context.">hidden states</span> of the Thinker and writes S3 speech tokens. A flow-matching decoder makes the waveform.</span></li>
+      <li class="point"><b>Thinker</b><span>The language model. It reads the encoded audio and video, decides to listen or speak, and writes the reply text.</span></li>
+      <li class="point"><b>Talker</b><span>It reads the <span class="term" tabindex="0" data-def="The internal vectors of the language model for each token. They carry meaning and context.">hidden states</span> and the reply text of the Thinker. It writes S3 speech tokens. A flow-matching decoder turns them into the audio that the user hears.</span></li>
       <li class="point step"><b>One meaning, two outputs</b><span>Text and speech share one meaning. The speech side does not need its own language model.</span></li>
     </ul>
     <figure>
-      <svg class="fig" width="980" height="560" viewBox="0 0 980 560" role="img" aria-label="Thinker and Talker diagram">
+      <svg class="fig" width="1000" height="610" viewBox="0 0 1000 610" role="img" aria-label="Thinker and Talker diagram: inputs go through encoders to the Thinker; reply text and hidden states go to the Talker; a decoder makes the speech that the user hears; delegate text goes to the harness">
         <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor" style="color:var(--muted)"/></marker></defs>
-        <g class="box"><rect x="20" y="60" width="220" height="80" rx="8"/><text x="130" y="108" text-anchor="middle">Video frames</text></g>
-        <g class="box"><rect x="20" y="200" width="220" height="80" rx="8"/><text x="130" y="248" text-anchor="middle">Audio stream</text></g>
-        <g class="box"><rect x="320" y="110" width="260" height="140" rx="8"/><text x="450" y="170" text-anchor="middle" class="svg-head">Thinker</text><text x="450" y="210" text-anchor="middle">Qwen3-8B</text></g>
-        <g class="box"><rect x="660" y="60" width="300" height="80" rx="8"/><text x="810" y="108" text-anchor="middle">Text tokens</text></g>
-        <g class="box"><rect x="660" y="230" width="300" height="100" rx="8"/><text x="810" y="272" text-anchor="middle" class="svg-head">Talker</text><text x="810" y="310" text-anchor="middle">S3 speech tokens</text></g>
-        <g class="box"><rect x="660" y="400" width="300" height="80" rx="8"/><text x="810" y="448" text-anchor="middle">Flow-matching decoder</text></g>
-        <path class="edge" d="M240 100 L320 150" marker-end="url(#arr)"/>
-        <path class="edge" d="M240 240 L320 210" marker-end="url(#arr)"/>
-        <path class="edge" d="M580 150 L660 100" marker-end="url(#arr)"/>
-        <path class="edge" d="M580 220 L660 270" marker-end="url(#arr)"/>
-        <text x="560" y="300" class="svg-small" text-anchor="middle">hidden states</text>
-        <path class="edge" d="M810 330 L810 400" marker-end="url(#arr)"/>
-        <path class="edge" d="M810 480 L810 530" marker-end="url(#arr)"/>
-        <text x="790" y="530" class="svg-small" text-anchor="end">waveform, 24 kHz</text>
+        <text x="20" y="24" class="svg-small">From the user</text>
+        <text x="320" y="24" class="svg-small">Understand and decide</text>
+        <text x="700" y="24" class="svg-small">Background</text>
+        <text x="320" y="352" class="svg-small">Speak</text>
+        <g class="box"><rect x="20" y="40" width="220" height="90" rx="8"/><text x="130" y="80" text-anchor="middle">Video frames</text><text x="130" y="112" text-anchor="middle" class="svg-small">SigLIP2 encoder</text></g>
+        <g class="box"><rect x="20" y="170" width="220" height="90" rx="8"/><text x="130" y="210" text-anchor="middle">Audio stream</text><text x="130" y="242" text-anchor="middle" class="svg-small">Whisper encoder</text></g>
+        <g class="box on"><rect x="320" y="40" width="300" height="220" rx="8"/><text x="470" y="100" text-anchor="middle" class="svg-head">Thinker</text><text x="470" y="138" text-anchor="middle">Qwen3-8B LLM</text><text x="470" y="192" text-anchor="middle" class="svg-small">Decides: listen or speak</text><text x="470" y="222" text-anchor="middle" class="svg-small">Writes the reply text</text></g>
+        <g class="box hid"><rect x="700" y="40" width="280" height="90" rx="8"/><text x="840" y="80" text-anchor="middle">Delegate text</text><text x="840" y="112" text-anchor="middle" class="svg-small">To the harness, not spoken</text></g>
+        <g class="box"><rect x="320" y="365" width="300" height="100" rx="8"/><text x="470" y="408" text-anchor="middle" class="svg-head">Talker</text><text x="470" y="442" text-anchor="middle" class="svg-small">S3 speech tokens, 25 per s</text></g>
+        <g class="box"><rect x="700" y="365" width="280" height="100" rx="8"/><text x="840" y="408" text-anchor="middle">Flow-matching decoder</text><text x="840" y="442" text-anchor="middle" class="svg-small">Tokens to waveform</text></g>
+        <g class="box out"><rect x="700" y="515" width="280" height="85" rx="8"/><text x="840" y="552" text-anchor="middle">The user hears speech</text><text x="840" y="582" text-anchor="middle" class="svg-small">24 kHz audio</text></g>
+        <path class="edge" d="M240 85 L320 120" marker-end="url(#arr)"/>
+        <path class="edge" d="M240 215 L320 180" marker-end="url(#arr)"/>
+        <path class="edge hid" d="M620 85 L700 85" marker-end="url(#arr)"/>
+        <path class="edge" d="M470 260 L470 365" marker-end="url(#arr)"/>
+        <text x="486" y="302" class="svg-label">reply text</text>
+        <text x="486" y="332" class="svg-label">+ hidden states</text>
+        <path class="edge" d="M620 415 L700 415" marker-end="url(#arr)"/>
+        <text x="840" y="290" text-anchor="middle" class="svg-small">reference voice</text>
+        <text x="840" y="316" text-anchor="middle" class="svg-small">from the system prompt</text>
+        <path class="edge" d="M840 326 L840 365" marker-end="url(#arr)"/>
+        <path class="edge" d="M840 465 L840 515" marker-end="url(#arr)"/>
       </svg>
     </figure>
   </div>
