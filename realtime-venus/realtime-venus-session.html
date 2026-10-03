@@ -375,6 +375,12 @@ table.tbl td code { white-space: nowrap; }
 .points.row3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px 40px; }
 .points.row3 .point > b { font-size: 26px; }
 .points.row3 .point > span { font-size: 21px; }
+.points.compact { gap: 18px; }
+.points.compact .point > b { font-size: 24px; }
+.points.compact .point > span { font-size: 21px; }
+.tl-ex { display: flex; flex-direction: column; gap: 4px; background: var(--surface); border-radius: 8px; padding: 10px 14px; }
+.tl-ex-head { font-size: 15px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.tl-ex code { font-size: 17px; }
 #w-memc { gap: 10px; padding: 16px 28px; }
 #w-memc .controls .reset { margin-left: auto; }
 .mem-legend { display: flex; flex-wrap: wrap; gap: 6px 28px; font-size: 20px; color: var(--ink-2); }
@@ -1283,27 +1289,55 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
 </section>
 
 <!-- 24. Tool use and delegation -->
-<section class="slide" data-type="interactive" data-title="Results: tools and delegation">
-  <h2>Tool selection is good. Arguments and routing need work.</h2>
+<section class="slide" data-type="interactive" data-title="Results: tool use">
+  <h2>Tool use: the right tool, but the arguments need work</h2>
   <div class="interactive" id="w-tool">
     <div class="interactive-head">
       <span class="badge data">Data from paper</span>
       <button class="reset" type="button">Reset</button>
     </div>
     <div class="choice" id="tl-m"></div>
-    <div class="row" style="align-items:flex-start;gap:40px">
+    <div class="cols" style="grid-template-columns:1.2fr 1fr;gap:32px">
       <div class="stack" style="gap:8px">
         <h3>Full-Duplex-Bench v3 (Table 7)</h3>
-        <svg id="tl-svg" class="fig" width="880" height="450" viewBox="0 0 880 450" role="img" aria-label="Tool use results"></svg>
+        <svg id="tl-svg" class="fig" width="940" height="450" viewBox="0 0 940 450" role="img" aria-label="Tool use results"></svg>
       </div>
-      <div class="stack" style="gap:8px">
-        <h3>Delegate benchmark (Table 8)</h3>
-        <svg id="dg-svg" class="fig" width="700" height="450" viewBox="0 0 700 450" role="img" aria-label="Delegation decision results"></svg>
+      <div class="panel stack" style="gap:8px;font-size:21px">
+        <span class="badge" style="align-self:flex-start">What is measured</span>
+        <h3 id="tl-met"></h3>
+        <p id="tl-def" style="margin:0"></p>
+        <div class="tl-ex">
+          <span class="tl-ex-head">Example, made up for this slide</span>
+          <span>User: "Book a table for two at Luigi's tomorrow at seven, um, no, eight."</span>
+          <code>book_table(place="Luigi's", people=2, time="tomorrow 20:00")</code>
+          <span id="tl-chk"></span>
+        </div>
+        <p style="margin:0;color:var(--muted)">The speech is human-recorded, with fillers, pauses, false starts, and self-corrections. Tasks call mock APIs, once or in a chain.</p>
       </div>
     </div>
-    <p class="try"><strong>Try:</strong> Select Pass@1. Then compare the two bars for routine interaction.</p>
+    <p class="try"><strong>Try:</strong> Select each metric in turn. Follow Realtime-Venus-Omni: second on tool selection, lower on the other two.</p>
   </div>
-  <p class="sources"><span class="source">Table 7</span><span class="source">Table 8</span><span class="source">Sec 7.5</span><span class="source">Sec 7.6</span></p>
+  <p class="sources"><span class="source">Table 7</span><span class="source">Sec 7.1</span><span class="source">Sec 7.5</span></p>
+</section>
+
+<!-- 24b. Delegate benchmark -->
+<section class="slide" data-type="content" data-title="Results: delegation">
+  <h2>Delegation: Audio hands off too often</h2>
+  <p style="margin:0 0 18px;font-size:26px;color:var(--ink-2)">For each request, the model decides: answer it in the frontend, or delegate it to the harness. The benchmark compares this choice with a reference label.</p>
+  <div class="cols" style="grid-template-columns:700fr 820fr;gap:48px">
+    <div class="stack" style="gap:8px">
+      <h3>Delegate benchmark (Table 8)</h3>
+      <svg id="dg-svg" class="fig" width="700" height="450" viewBox="0 0 700 450" role="img" aria-label="Delegation decision results"></svg>
+    </div>
+    <ul class="points compact">
+      <li class="point"><b>Overall: routing accuracy</b><span>The share of all requests that the model routes correctly.</span></li>
+      <li class="point"><b>External capabilities: delegation recall</b><span>The request needs a tool or outside data, so the right choice is to delegate. Score: the share that the model delegates. <i>Example: "Find an Italian restaurant that is open now."</i></span></li>
+      <li class="point"><b>Routine interaction: specificity</b><span>The frontend can answer, so the right choice is not to delegate. Score: the share that the model keeps. Audio keeps only 39%: it delegates most routine requests. <i>Example: "Say that again, more slowly."</i></span></li>
+      <li class="point"><b>Reasoning: routing accuracy</b><span>A mix: some requests need delegation, some do not. <i>Example: delegate "Plan a three-day road trip", but answer "Is 17 a prime number?" directly.</i></span></li>
+    </ul>
+  </div>
+  <p class="note">Examples are ours, not from the benchmark, which is internal to the paper. Omni gets audio-visual input and Audio gets audio only, so the two modes differ in difficulty.</p>
+  <p class="sources"><span class="source">Table 8</span><span class="source">Sec 7.6</span></p>
 </section>
 
 <!-- 25. Memory ablation -->
@@ -2405,7 +2439,7 @@ const OURS = /Realtime-Venus/;
   render();
 })();
 
-/* 24. Tool use and delegation, Tables 7 and 8 */
+/* 24. Tool use, Table 7 */
 (function () {
   const root = $('w-tool'); if (!root) return;
   const M = [
@@ -2413,34 +2447,41 @@ const OURS = /Realtime-Venus/;
     ['Grok', [79.7, 54.2, 43.0]], ['Ultravox', [79.4, 51.3, 41.0]], ['GPT-Realtime', [87.6, 68.0, 60.0]],
     ['NemotronLabs VoiceChat-11B', [82.5, 42.2, 33.0]], ['Realtime-Venus-Omni', [86.0, 53.1, 43.0]], ['Realtime-Venus-Audio', [82.0, 52.2, 42.0]]
   ];
-  const m = choice($('tl-m'), [{ v: 0, label: 'Tool selection F1' }, { v: 1, label: 'Argument accuracy' }, { v: 2, label: 'Pass@1' }], 0, render);
-  const DG = { cats: [['Overall', ''], ['External', '(recall)'], ['Routine', '(specificity)'], ['Reasoning', '']], omni: [75.93, 68.33, 84.44, 75.00], audio: [68.89, 92.22, 39.44, 75.00] };
-  function drawDG() {
-    const svg = $('dg-svg'); clear(svg);
-    const X0 = 20, gw = 680 / 4, Y0 = 330, HH = 270;
-    S('line', { x1: X0, x2: 690, y1: Y0, y2: Y0, class: 'axis-line' }, svg);
-    DG.cats.forEach((c, i) => {
-      const gx = X0 + i * gw;
-      [['omni', 'bar-ours'], ['audio', 'bar-other']].forEach(([k, cls], j) => {
-        const v = DG[k][i], h = v / 100 * HH, x = gx + 22 + j * 64;
-        S('rect', { x: x, y: Y0 - h, width: 56, height: h, rx: 3, class: cls }, svg);
-        T(svg, x + 28, Y0 - h - 8, v.toFixed(1), { 'text-anchor': 'middle', class: 'svg-small' });
-      });
-      const l1 = c[0], l2 = c[1];
-      T(svg, gx + gw / 2, Y0 + 28, l1, { 'text-anchor': 'middle', class: 'svg-small' });
-      if (l2) T(svg, gx + gw / 2, Y0 + 52, l2, { 'text-anchor': 'middle', class: 'svg-small' });
-    });
-    S('rect', { x: 30, y: 400, width: 22, height: 22, rx: 4, class: 'bar-ours' }, svg);
-    T(svg, 60, 418, 'Omni', { class: 'svg-label' });
-    S('rect', { x: 160, y: 400, width: 22, height: 22, rx: 4, class: 'bar-other' }, svg);
-    T(svg, 190, 418, 'Audio', { class: 'svg-label' });
-  }
+  const MET = [
+    { met: 'Tool selection F1', def: 'Compares the tools the model calls with the expected tools. It goes down for a missed call and for an extra call. It does not check the arguments.', chk: 'Pass: it calls book_table and nothing else. A missed call or an extra search_places call lowers the score.' },
+    { met: 'Argument accuracy', def: 'Checks that the meaning of each argument is correct. The model must keep the spoken details, including corrections.', chk: 'Fail: time="tomorrow 19:00". The user corrected seven to eight.' },
+    { met: 'Pass@1', def: 'The whole episode is right on the first try: all expected tools, no extra calls, and every argument correct.', chk: 'Pass only if the call is book_table, nothing else is called, and all three arguments are right.' }
+  ];
+  const m = choice($('tl-m'), MET.map((x, i) => ({ v: i, label: x.met })), 0, render);
   function render() {
     const i = +m.v;
     hbars($('tl-svg'), M.map(r => ({ label: r[0], value: r[1][i], ours: OURS.test(r[0]) })).sort((p, q) => q.value - p.value), { max: 100, labelW: 360, fmt: v => v.toFixed(1) + '%' });
+    $('tl-met').textContent = MET[i].met; $('tl-def').textContent = MET[i].def; $('tl-chk').textContent = MET[i].chk;
   }
   Deck.onReset(root, () => { m.set(0); render(); });
-  drawDG(); render();
+  render();
+})();
+
+/* 24b. Delegate benchmark, Table 8 */
+(function () {
+  const svg = $('dg-svg'); if (!svg) return;
+  const DG = { cats: [['Overall', ''], ['External', '(recall)'], ['Routine', '(specificity)'], ['Reasoning', '']], omni: [75.93, 68.33, 84.44, 75.00], audio: [68.89, 92.22, 39.44, 75.00] };
+  const X0 = 20, gw = 680 / 4, Y0 = 330, HH = 270;
+  S('line', { x1: X0, x2: 690, y1: Y0, y2: Y0, class: 'axis-line' }, svg);
+  DG.cats.forEach((c, i) => {
+    const gx = X0 + i * gw;
+    [['omni', 'bar-ours'], ['audio', 'bar-other']].forEach(([k, cls], j) => {
+      const v = DG[k][i], h = v / 100 * HH, x = gx + 22 + j * 64;
+      S('rect', { x: x, y: Y0 - h, width: 56, height: h, rx: 3, class: cls }, svg);
+      T(svg, x + 28, Y0 - h - 8, v.toFixed(1), { 'text-anchor': 'middle', class: 'svg-small' });
+    });
+    T(svg, gx + gw / 2, Y0 + 28, c[0], { 'text-anchor': 'middle', class: 'svg-small' });
+    if (c[1]) T(svg, gx + gw / 2, Y0 + 52, c[1], { 'text-anchor': 'middle', class: 'svg-small' });
+  });
+  S('rect', { x: 30, y: 400, width: 22, height: 22, rx: 4, class: 'bar-ours' }, svg);
+  T(svg, 60, 418, 'Omni', { class: 'svg-label' });
+  S('rect', { x: 160, y: 400, width: 22, height: 22, rx: 4, class: 'bar-other' }, svg);
+  T(svg, 190, 418, 'Audio', { class: 'svg-label' });
 })();
 
 /* 25. Memory ablation, Table 3 */
