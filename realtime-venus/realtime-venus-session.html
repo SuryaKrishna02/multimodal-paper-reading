@@ -1100,6 +1100,7 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
   <div class="interactive" id="w-har">
     <div class="interactive-head">
       <div class="row" style="gap:12px">
+        <button type="button" id="har-prev">Previous stage</button>
         <button type="button" id="har-next">Next stage</button>
         <button class="reset" type="button">Reset</button>
       </div>
@@ -1567,6 +1568,12 @@ function T(parent, x, y, str, attrs) {
 }
 function clear(n) { while (n.firstChild) n.removeChild(n.firstChild); }
 function $(id) { return document.getElementById(id); }
+function typeset(el) {
+  const mj = window.MathJax;
+  if (!mj || !mj.typesetPromise) return;
+  if (mj.typesetClear) mj.typesetClear([el]);
+  mj.typesetPromise([el]);
+}
 function choice(container, items, value, onChange) {
   const api = { v: value };
   const btns = items.map(it => {
@@ -2081,11 +2088,8 @@ const OURS = /Realtime-Venus/;
   function render() {
     Object.keys(els).forEach(k => els[k].classList.toggle('on', k === sel));
     const p = P[sel];
-    const panel = $('arch-name').parentNode;
-    const mj = window.MathJax && window.MathJax.typesetPromise;
-    if (mj && window.MathJax.typesetClear) window.MathJax.typesetClear([panel]);
     $('arch-name').textContent = p.n; $('arch-role').innerHTML = p.role; $('arch-in').innerHTML = p.i; $('arch-out').innerHTML = p.o; $('arch-used').innerHTML = p.u;
-    if (mj) window.MathJax.typesetPromise([panel]);
+    typeset($('arch-name').parentNode);
   }
   Deck.onReset(root, () => { sel = 'llm'; render(); });
   render();
@@ -2096,7 +2100,7 @@ const OURS = /Realtime-Venus/;
   const root = $('w-har'); if (!root) return;
   const svg = $('har-svg'), err = $('har-err'), stale = $('har-stale');
   const REQ = {
-    mm: { label: '"Which book was red?"', cap: 'multimodal', args: '{ question, frozen frames from X_i }' },
+    mm: { label: '"Which book was red?"', cap: 'multimodal', args: '{ question, frozen frames from \\(X_i\\) }' },
     gen: { label: '"Plan a road trip."', cap: 'general', args: '{ objective, constraints }' },
     sk: { label: '"Find an open Italian restaurant."', cap: 'skill: place_search', args: '{ cuisine: "Italian", near: user location, open_now: true }' }
   };
@@ -2113,12 +2117,12 @@ const OURS = /Realtime-Venus/;
     { id: 'thk', g: 2, t: 'Thinker speaks', x: 1340, y: 124 }
   ];
   const STEPS = [
-    { on: ['dreq'], st: null, txt: 'The Thinker writes <delegate> q_i </delegate>. The host hides the span from text and speech.' },
+    { on: ['dreq'], st: null, txt: 'The Thinker writes &lt;delegate&gt; \\(q_i\\) &lt;/delegate&gt;. The host hides the span from text and speech.' },
     { on: ['gate'], st: null, txt: 'The protocol gate checks the request and its identity. One request makes at most one work item.' },
-    { on: ['snap', 'work'], st: 'QUEUED', txt: 'Capture freezes the evidence X_i at the request time (Eq. 4). The work item enters QUEUED.' },
-    { on: ['rout'], st: 'RUNNING', txt: 'The router reads q_i and a short evidence summary z_i. It picks a capability and its arguments (Eq. 5).' },
-    { on: ['exec'], st: 'RUNNING', txt: 'The executor runs and returns a normalized result r_i.', fail: 'The executor fails. The work item ends in FAILED.' },
-    { on: ['pol'], st: 'COMPLETED', txt: 'The adapter polishes r_i into one private <backend> message (Eq. 6). The work item enters COMPLETED.', stale: 'The freshness deadline passed. The harness excludes the stale result from reintegration.' },
+    { on: ['snap', 'work'], st: 'QUEUED', txt: 'Capture freezes the evidence \\(X_i\\) at the request time (Eq. 4). The work item enters QUEUED.' },
+    { on: ['rout'], st: 'RUNNING', txt: 'The router reads \\(q_i\\) and a short evidence summary \\(z_i\\). It picks a capability and its arguments (Eq. 5).' },
+    { on: ['exec'], st: 'RUNNING', txt: 'The executor runs and returns a normalized result \\(r_i\\).', fail: 'The executor fails. The work item ends in FAILED.' },
+    { on: ['pol'], st: 'COMPLETED', txt: 'The adapter polishes \\(r_i\\) into one private &lt;backend&gt; message (Eq. 6). The work item enters COMPLETED.', stale: 'The freshness deadline passed. The harness excludes the stale result from reintegration.' },
     { on: ['rein'], st: 'DELIVERING', txt: 'The harness reserves the message for the origin session. The work item enters DELIVERING.' },
     { on: ['thk'], st: 'DELIVERED', txt: 'The frontend picks a time and speaks the reply. Each Talker chunk gets a playback acknowledgment.' }
   ];
@@ -2156,10 +2160,13 @@ const OURS = /Realtime-Venus/;
       if (i < STATES.length - 1) T(svg, 280 + i * 260, 298, '→', { 'text-anchor': 'middle', class: 'svg-label' });
     });
     if (isStale) T(svg, 1460, 298, 'excluded: stale', { 'text-anchor': 'middle', class: 'svg-small' });
-    $('har-now').textContent = 'Stage ' + (step + 1) + ' of ' + (end + 1) + '. ' + (failed ? s.fail : isStale ? s.stale : s.txt);
-    $('har-route').textContent = step >= 3 ? REQ[req.v].cap + '  ' + REQ[req.v].args : 'not yet';
+    $('har-now').innerHTML = 'Stage ' + (step + 1) + ' of ' + (end + 1) + '. ' + (failed ? s.fail : isStale ? s.stale : s.txt);
+    $('har-route').innerHTML = step >= 3 ? REQ[req.v].cap + '  ' + REQ[req.v].args : 'not yet';
+    typeset($('har-now').closest('.panel'));
+    $('har-prev').disabled = step <= 0;
     $('har-next').disabled = step >= end;
   }
+  $('har-prev').addEventListener('click', () => { step = Math.max(0, step - 1); render(); });
   $('har-next').addEventListener('click', () => { step = Math.min(endStep(), step + 1); render(); });
   [err, stale].forEach(e => e.addEventListener('change', () => { step = 0; render(); }));
   Deck.onReset(root, () => { step = 0; err.checked = false; stale.checked = false; req.set('sk'); render(); });
