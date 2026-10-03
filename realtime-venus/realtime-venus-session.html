@@ -1210,7 +1210,8 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
     const s = slides[cur];
     s.classList.add('active');
     setSteps(s, opts.allSteps ? stepsOf(s).length : 0);
-    history.replaceState(null, '', '#' + (cur + 1));
+    // Sandboxed previews (for example an about:srcdoc frame) block URL changes. Navigation still works without them.
+    try { history.replaceState(null, '', '#' + (cur + 1)); } catch (err) { /* URL update not allowed here */ }
     updateChrome();
     (enterHandlers.get(s) || []).forEach(fn => { try { fn(); } catch (err) { console.error(err); } });
   }
@@ -1260,9 +1261,10 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
     if (open) { const c = gridList.children[cur]; if (c) c.focus(); }
   }
   function toggleFull() {
+    if (!document.fullscreenEnabled) return;
     try {
-      if (document.fullscreenElement) document.exitFullscreen();
-      else document.documentElement.requestFullscreen();
+      const r = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
+      if (r && r.catch) r.catch(err => console.warn(err));
     } catch (err) { console.warn(err); }
   }
   // Buttons
@@ -1270,6 +1272,8 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
   document.getElementById('btn-next').addEventListener('click', next);
   document.getElementById('btn-grid').addEventListener('click', () => toggleGrid());
   document.getElementById('btn-full').addEventListener('click', toggleFull);
+  // Frames that do not allow fullscreen (for example a sandboxed preview) get no Full screen button.
+  if (!document.fullscreenEnabled) document.getElementById('btn-full').hidden = true;
   deck.addEventListener('click', e => {
     const rb = e.target.closest('.reveal-btn');
     if (rb) { reveal(rb.closest('.slide')); return; }
