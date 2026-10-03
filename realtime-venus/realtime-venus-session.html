@@ -313,6 +313,29 @@ table.tbl th { font-family: var(--font-head); color: var(--muted); font-weight: 
 table.tbl td code { white-space: nowrap; }
 .lead { font-size: 44px; font-family: var(--font-title); font-weight: 500; max-width: none; line-height: 1.25; }
 .big-list li { font-size: 32px; max-width: 58ch; }
+/* Annotated equation (slide 10) */
+.eq-t { font-family: "STIX Two Math", "Cambria Math", "Latin Modern Math", "Times New Roman", serif; font-size: 64px; fill: var(--ink); }
+.eq-t .v, .eq-s .v { font-style: italic; }
+.eq-t .sb { font-size: 38px; font-style: italic; }
+.eq-t.user { fill: var(--accent-strong); }
+.eq-s { font-family: "STIX Two Math", "Cambria Math", "Times New Roman", serif; font-size: 30px; fill: var(--ink-2); }
+.eq-s .sb { font-size: 20px; font-style: italic; }
+.ann-line { stroke: var(--muted); stroke-width: 2.5; fill: none; }
+.ann-line.user { stroke: var(--accent); }
+.ok-pill { fill: var(--accent-soft); fill-opacity: 0.35; stroke: var(--accent-soft); stroke-width: 2; }
+.ok-chip { fill: var(--accent); }
+.ok-chip-t { fill: #FFFFFF; font-family: "STIX Two Math", "Cambria Math", "Times New Roman", serif; font-style: italic; font-size: 22px; }
+.lg-user { fill: var(--accent); }
+.lg-priv { fill: #B8BFCC; }
+.ann-card { box-sizing: border-box; height: 100%; background: var(--surface-2); border: 1px solid var(--line); border-top: 5px solid var(--accent-soft); border-radius: 8px; padding: 8px 12px; font-family: var(--font-body); font-size: 18px; line-height: 1.32; color: var(--ink-2); overflow: hidden; }
+.ann-card b { display: block; font-size: 20px; color: var(--ink); margin-bottom: 2px; }
+.ann-card .ex { display: block; margin-top: 4px; color: var(--muted); }
+.ann-card .tag { display: block; font-family: var(--font-head); font-size: 13px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase; color: var(--muted); }
+.ann-card.user { border-top-color: var(--accent); }
+.ann-card.user .tag { color: var(--accent-strong); }
+.ann-card.priv { border-top-color: #B8BFCC; }
+.ann-card code { font-size: 0.85em; }
+.ann-card sub, .ann-card sup { font-size: 0.7em; }
 /* Key points: a bold anchor phrase with one short supporting line */
 .points { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 26px; }
 .points.row { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 64px; }
@@ -635,33 +658,79 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
 </section>
 
 <!-- 7. Eq 1 -->
-<section class="slide" data-type="interactive" data-title="Runtime step, Eq. 1">
+<section class="slide" data-type="content" data-title="Runtime step, Eq. 1">
   <h2>One runtime step per chunk</h2>
-  <div class="cols wide-right">
-    <div class="stack">
-      <div class="math">\[ (s_{k+1},\, O_k) = F_m(s_k,\, x_k^{m},\, b_k;\, \eta_k) \]</div>
-      <div class="math">\[ O_k = (c_k,\, Y_k,\, D_k,\, S_k) \]</div>
-      <ul class="points">
-        <li class="point"><b>One step for both frontends</b><span>The index \(k\) counts one-second chunks. The frontend \(m\) is audio or omni.</span></li>
-        <li class="point"><b>Two public outputs</b><span>Only \(Y_k\) and \(S_k\) reach the user. The other outputs stay private.</span></li>
-      </ul>
-    </div>
-    <div class="interactive" id="w-eq1">
-      <div class="interactive-head">
-        <button class="reset" type="button">Reset</button>
-      </div>
-      <svg id="eq1-svg" class="fig" width="900" height="370" viewBox="0 0 900 370" role="img" aria-label="Inputs and outputs of one runtime step"></svg>
-      <div class="panel">
-        <dl class="kv">
-          <dt>Symbol</dt><dd id="eq1-name"></dd>
-          <dt>Meaning</dt><dd id="eq1-mean"></dd>
-          <dt>Example</dt><dd id="eq1-ex"></dd>
-          <dt>Reaches user</dt><dd id="eq1-user"></dd>
-        </dl>
-      </div>
-      <p class="try"><strong>Try:</strong> Click a box in the diagram. Read its meaning below.</p>
-    </div>
-  </div>
+  <svg class="fig" width="1680" height="785" viewBox="0 0 1680 785" role="img" aria-label="Equation 1 with each symbol explained. The step runs once per one-second chunk. Inputs: frontend step, state, media, harness reply, feedback. Outputs: next state, control token, foreground text, delegation text, speech tokens. Only foreground text and speech tokens reach the user.">
+<defs><marker id="arr-eq" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker><marker id="arr-c0B1530" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#0B1530"/></marker><marker id="arr-c0F8A5F" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#0F8A5F"/></marker><marker id="arr-cB86E00" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#B86E00"/></marker><marker id="arr-cB0457F" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#B0457F"/></marker><marker id="arr-c6B4FBB" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6B4FBB"/></marker><marker id="arr-eq-u" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/></marker></defs>
+<text x="0" y="34" class="svg-label strong">Where this step runs</text>
+<text x="0" y="66" class="svg-small">The Frontend box of slide 7 runs it</text>
+<text x="0" y="92" class="svg-small">once per one-second chunk. The state</text>
+<text x="0" y="118" class="svg-small">carries over to the next chunk.</text>
+<text x="446" y="86" class="svg-small">&#8230;</text>
+<g class="box"><rect x="470" y="48" width="300" height="64" rx="8"/><text x="620" y="88" text-anchor="middle">Step <tspan font-style="italic">k</tspan> &#8722; 1</text></g>
+<g class="box on"><rect x="900" y="48" width="300" height="64" rx="8"/><text x="1050" y="88" text-anchor="middle">Step <tspan font-style="italic">k</tspan>: Eq. 1</text></g>
+<g class="box"><rect x="1330" y="48" width="300" height="64" rx="8"/><text x="1480" y="88" text-anchor="middle">Step <tspan font-style="italic">k</tspan> + 1</text></g>
+<text x="1652" y="86" class="svg-small">&#8230;</text>
+<path class="edge" d="M770 80 L900 80" marker-end="url(#arr-eq)"/>
+<path class="edge" d="M1200 80 L1330 80" marker-end="url(#arr-eq)"/>
+<text x="835" y="68" text-anchor="middle" class="eq-s"><tspan class="v">s</tspan><tspan class="sb" dy="8">k</tspan></text>
+<text x="1265" y="68" text-anchor="middle" class="eq-s"><tspan class="v">s</tspan><tspan class="sb" dy="8">k+1</tspan></text>
+<path class="edge" d="M1050 6 L1050 48" marker-end="url(#arr-eq)"/>
+<text x="1064" y="30" class="svg-small">new media and harness replies</text>
+<path class="edge" d="M1050 112 L1050 150" marker-end="url(#arr-eq)"/>
+<text x="1064" y="140" class="svg-small">outputs of this chunk</text>
+<text x="0" y="210" class="svg-head">Inputs</text>
+<text x="0" y="242" class="svg-small">What the step reads</text>
+<text x="0" y="268" class="svg-small">in chunk <tspan font-style="italic">k</tspan></text>
+<text x="1350" y="625" class="svg-head">Outputs</text>
+<rect x="1350" y="651" width="22" height="22" rx="4" class="lg-user"/><text x="1384" y="669" class="svg-small">Reaches the user</text>
+<rect x="1350" y="691" width="22" height="22" rx="4" class="lg-priv"/><text x="1384" y="709" class="svg-small">Private: for the host</text>
+<text x="1384" y="735" class="svg-small">or the next step</text>
+<rect x="392" y="443" width="410" height="98" rx="16" class="ok-pill"/>
+<rect x="562" y="429" width="68" height="28" rx="14" class="ok-chip"/><text x="596" y="450" text-anchor="middle" class="ok-chip-t">O<tspan font-size="14" dy="4">k</tspan></text>
+<text x="230" y="505" text-anchor="middle" class="eq-t">(</text>
+<text x="310" y="505" text-anchor="middle" class="eq-t"><tspan class="v">s</tspan><tspan class="sb" dy="14">k+1</tspan></text>
+<text x="372" y="505" text-anchor="middle" class="eq-t">,</text>
+<text x="425" y="505" text-anchor="middle" class="eq-t"><tspan class="v">c</tspan><tspan class="sb" dy="14">k</tspan></text>
+<text x="476" y="505" text-anchor="middle" class="eq-t">,</text>
+<text x="530" y="505" text-anchor="middle" class="eq-t user"><tspan class="v">Y</tspan><tspan class="sb" dy="14">k</tspan></text>
+<text x="586" y="505" text-anchor="middle" class="eq-t">,</text>
+<text x="645" y="505" text-anchor="middle" class="eq-t"><tspan class="v">D</tspan><tspan class="sb" dy="14">k</tspan></text>
+<text x="704" y="505" text-anchor="middle" class="eq-t">,</text>
+<text x="760" y="505" text-anchor="middle" class="eq-t user"><tspan class="v">S</tspan><tspan class="sb" dy="14">k</tspan></text>
+<text x="815" y="505" text-anchor="middle" class="eq-t">)</text>
+<text x="895" y="505" text-anchor="middle" class="eq-t">=</text>
+<text x="985" y="505" text-anchor="middle" class="eq-t"><tspan class="v">F</tspan><tspan class="sb" dy="14">m</tspan></text>
+<text x="1052" y="505" text-anchor="middle" class="eq-t">(</text>
+<text x="1112" y="505" text-anchor="middle" class="eq-t" style="fill:#0F8A5F"><tspan class="v">s</tspan><tspan class="sb" dy="14">k</tspan></text>
+<text x="1166" y="505" text-anchor="middle" class="eq-t">,</text>
+<text x="1228" y="505" text-anchor="middle" class="eq-t" style="fill:#B86E00"><tspan class="v">x</tspan><tspan class="sb" dy="14">k</tspan><tspan class="sb" dx="-19" dy="-42">m</tspan></text>
+<text x="1288" y="505" text-anchor="middle" class="eq-t">,</text>
+<text x="1350" y="505" text-anchor="middle" class="eq-t" style="fill:#B0457F"><tspan class="v">b</tspan><tspan class="sb" dy="14">k</tspan></text>
+<text x="1404" y="505" text-anchor="middle" class="eq-t">;</text>
+<text x="1462" y="505" text-anchor="middle" class="eq-t" style="fill:#6B4FBB"><tspan class="v">&#951;</tspan><tspan class="sb" dy="14">k</tspan></text>
+<text x="1522" y="505" text-anchor="middle" class="eq-t">)</text>
+<path class="ann-line" style="stroke:#0B1530" d="M405 395 C405 431 985 415 985 451" marker-end="url(#arr-c0B1530)"/>
+<foreignObject x="270" y="180" width="270" height="215"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#0B1530"><b>Frontend step <i>F</i><sub>m</sub></b>Streaming decoding and runtime scheduling. It keeps the causal order inside each chunk.<span class="ex">Example: <i>m</i> = Omni or Audio</span></div></foreignObject>
+<path class="ann-line" style="stroke:#0F8A5F" d="M690 395 C690 431 1112 415 1112 451" marker-end="url(#arr-c0F8A5F)"/>
+<foreignObject x="555" y="180" width="270" height="215"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#0F8A5F"><b>State before chunk <i>k</i></b>Model context, partial output, and admitted replies that wait for delivery.<span class="ex">Example: the dialogue so far, plus a reply not yet spoken</span></div></foreignObject>
+<path class="ann-line" style="stroke:#B86E00" d="M975 395 C975 431 1228 385 1228 421" marker-end="url(#arr-cB86E00)"/>
+<foreignObject x="840" y="180" width="270" height="215"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#B86E00"><b>Media input</b>Audio: <i>u</i><sub>k</sub>. Omni: (<i>u</i><sub>k</sub>, <i>v</i><sub>k</sub>). <i>v</i><sub>k</sub> is empty when no frame arrives.<span class="ex">Example: 1 s of audio and one video frame</span></div></foreignObject>
+<path class="ann-line" style="stroke:#B0457F" d="M1260 395 C1260 431 1350 415 1350 451" marker-end="url(#arr-cB0457F)"/>
+<foreignObject x="1125" y="180" width="270" height="215"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#B0457F"><b>Harness reply</b>Private reply text from the harness. The frontend speaks it later, as <i>Y</i><sub>k</sub>.<span class="ex">Example: "Trattoria Roma is 400 m away."</span></div></foreignObject>
+<path class="ann-line" style="stroke:#6B4FBB" d="M1545 395 C1545 431 1462 415 1462 451" marker-end="url(#arr-c6B4FBB)"/>
+<foreignObject x="1410" y="180" width="270" height="215"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#6B4FBB"><b>Runtime feedback</b>Causal events, for example playback acknowledgments.<span class="ex">Example: the Talker confirms that chunk 12 was played</span></div></foreignObject>
+<path class="ann-line" d="M126 595 C126 565 310 569 310 539" marker-end="url(#arr-eq)"/>
+<foreignObject x="0" y="595" width="252" height="180"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card priv"><span class="tag">Private</span><b>State after chunk <i>k</i></b>The next chunk starts from it.<span class="ex">Example: the same context, plus this chunk</span></div></foreignObject>
+<path class="ann-line" d="M396 595 C396 565 425 569 425 539" marker-end="url(#arr-eq)"/>
+<foreignObject x="270" y="595" width="252" height="180"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card priv"><span class="tag">Private</span><b>Control token</b>Listen, speak, or end of turn.<span class="ex">Example: <code>&lt;|speak|&gt;</code></span></div></foreignObject>
+<path class="ann-line user" d="M666 595 C666 565 530 569 530 539" marker-end="url(#arr-eq-u)"/>
+<foreignObject x="540" y="595" width="252" height="180"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card user"><span class="tag">Reaches the user</span><b>Foreground text</b>The Talker turns it into speech.<span class="ex">Example: "Let me look for a place near you."</span></div></foreignObject>
+<path class="ann-line" d="M936 595 C936 565 645 569 645 539" marker-end="url(#arr-eq)"/>
+<foreignObject x="810" y="595" width="252" height="180"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card priv"><span class="tag">Private</span><b>Delegation text</b>It can extend across many chunks. The host hides it.<span class="ex">Example: <code>&lt;delegate&gt;</code> Find an Italian restaurant&#8230;</span></div></foreignObject>
+<path class="ann-line user" d="M1206 595 C1206 565 760 569 760 539" marker-end="url(#arr-eq-u)"/>
+<foreignObject x="1080" y="595" width="252" height="180"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card user"><span class="tag">Reaches the user</span><b>Speech tokens</b>They become the waveform.<span class="ex">Example: about 25 S3 tokens for 1 s of speech</span></div></foreignObject>
+</svg>
   <p class="sources"><span class="source">Sec 3.2</span><span class="source">Eq. 1</span></p>
 </section>
 
@@ -1519,70 +1588,6 @@ const OURS = /Realtime-Venus/;
   });
   Deck.onReset(root, () => { stop(); k = 0; render(); });
   render();
-})();
-
-/* 7. Eq. 1 symbols */
-(function () {
-  const root = $('w-eq1'); if (!root) return;
-  const svg = $('eq1-svg');
-  const D = {
-    s: { n: 's_k', m: 'The frontend state before chunk k. It holds the model context, the partial output, and admitted replies that wait for delivery.', e: 'The dialogue so far, plus a backend reply that the model did not speak yet.', u: 'No' },
-    x: { n: 'x_k^m', m: 'The media input of chunk k. For the audio frontend it is u_k. For the omni frontend it is (u_k, v_k). v_k is empty when no frame is available.', e: 'One second of microphone audio and one video frame.', u: 'Not an output' },
-    b: { n: 'b_k', m: 'Private reply text from the harness. It enters before the assistant output of chunk k.', e: '"Trattoria Roma is 400 m away. It is open until 23:00."', u: 'No. The frontend speaks it later, as Y_k.' },
-    eta: { n: 'η_k', m: 'Runtime feedback. It records causal events, for example playback acknowledgments.', e: 'The Talker confirms that chunk 12 of speech was played.', u: 'Not an output' },
-    F: { n: 'F_m', m: 'Streaming decoding and runtime scheduling for frontend m. It keeps the causal order of input and output inside each chunk.', e: 'The Omni or the Audio frontend.', u: 'Not applicable' },
-    s1: { n: 's_{k+1}', m: 'The state after chunk k. The next chunk starts from it.', e: 'The same context, plus the new chunk.', u: 'No' },
-    c: { n: 'c_k', m: 'The interaction-control token: listen, speak, or end of turn.', e: '<|speak|>', u: 'No' },
-    Y: { n: 'Y_k', m: 'Foreground text. The Talker turns it into speech.', e: '"Let me look for a place near you."', u: 'Yes' },
-    Dd: { n: 'D_k', m: 'Delegation text. It can extend across many chunks. The host hides it.', e: '<delegate> Find an Italian restaurant near the user that is open now. </delegate>', u: 'No' },
-    Ss: { n: 'S_k', m: 'Speech tokens for this chunk. They become the waveform.', e: 'About 25 S3 tokens for one second of speech.', u: 'Yes' }
-  };
-  const nodes = [
-    { id: 's', x: 20, y: 30, base: 's', sub: 'k' },
-    { id: 'x', x: 20, y: 115, base: 'x', sub: 'k', sup: 'm' },
-    { id: 'b', x: 20, y: 200, base: 'b', sub: 'k' },
-    { id: 'eta', x: 20, y: 285, base: 'η', sub: 'k' },
-    { id: 'F', x: 340, y: 115, base: 'F', sub: 'm', w: 200, h: 170 },
-    { id: 's1', x: 680, y: 0, base: 's', sub: 'k+1' },
-    { id: 'c', x: 680, y: 76, base: 'c', sub: 'k' },
-    { id: 'Y', x: 680, y: 152, base: 'Y', sub: 'k' },
-    { id: 'Dd', x: 680, y: 228, base: 'D', sub: 'k' },
-    { id: 'Ss', x: 680, y: 304, base: 'S', sub: 'k' }
-  ];
-  let sel = 'b';
-  const els = {};
-  function build() {
-    clear(svg);
-    nodes.forEach(n => {
-      if (n.id === 'F') return;
-      const w = 200, h = 64;
-      const fromLeft = n.x < 300;
-      const x1 = fromLeft ? n.x + w : 540, y1 = fromLeft ? n.y + h / 2 : 200;
-      const x2 = fromLeft ? 340 : n.x, y2 = fromLeft ? 200 : n.y + h / 2;
-      S('path', { d: 'M' + x1 + ' ' + y1 + ' C ' + ((x1 + x2) / 2) + ' ' + y1 + ', ' + ((x1 + x2) / 2) + ' ' + y2 + ', ' + x2 + ' ' + y2, class: 'edge' }, svg);
-    });
-    nodes.forEach(n => {
-      const w = n.w || 200, h = n.h || 64;
-      const g = S('g', { class: 'node', tabindex: 0, role: 'button', 'aria-label': D[n.id].n }, svg);
-      S('rect', { x: n.x, y: n.y, width: w, height: h, rx: 10 }, g);
-      const t = S('text', { x: n.x + w / 2, y: n.y + h / 2 + 10, 'text-anchor': 'middle', style: 'font-size:30px;font-style:italic' }, g);
-      t.appendChild(document.createTextNode(n.base));
-      if (n.sup) { const sp = S('tspan', { 'baseline-shift': 'super', style: 'font-size:20px' }, t); sp.textContent = n.sup; }
-      const sb = S('tspan', { 'baseline-shift': 'sub', style: 'font-size:20px' }, t); sb.textContent = n.sub;
-      if (n.id === 'F') T(g, n.x + w / 2, n.y + h - 24, 'one step', { 'text-anchor': 'middle', class: 'svg-small' });
-      if (['Y', 'Ss'].includes(n.id)) T(g, n.x + w - 12, n.y + 24, 'user', { 'text-anchor': 'end', class: 'svg-small' });
-      g.addEventListener('click', () => { sel = n.id; render(); });
-      g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); sel = n.id; render(); } });
-      els[n.id] = g;
-    });
-  }
-  function render() {
-    Object.keys(els).forEach(id => els[id].classList.toggle('on', id === sel));
-    const d = D[sel];
-    $('eq1-name').textContent = d.n; $('eq1-mean').textContent = d.m; $('eq1-ex').textContent = d.e; $('eq1-user').textContent = d.u;
-  }
-  Deck.onReset(root, () => { sel = 'b'; render(); });
-  build(); render();
 })();
 
 /* 8. Stream serialization */
