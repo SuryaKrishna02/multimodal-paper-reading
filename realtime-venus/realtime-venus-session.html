@@ -1612,7 +1612,7 @@ function choice(container, items, value, onChange) {
 function hbars(svg, rows, o) {
   clear(svg);
   const W = +svg.getAttribute('width'), H = +svg.getAttribute('height');
-  const lw = o.labelW || 340, right = o.right || 110, top = 6;
+  const lw = o.labelW || 340, right = o.right || 110, top = o.top || 6;
   const rh = (H - top - 6) / rows.length;
   const bh = Math.min(rh * 0.66, 42);
   const sc = v => Math.max(2, (v / o.max) * (W - lw - right));
@@ -2380,7 +2380,7 @@ const OURS = /Realtime-Venus/;
     const rows = M.map(r => ({ label: r[0], value: r[1][col], ours: OURS.test(r[0]) }))
       .sort((p, q) => up ? q.value - p.value : p.value - q.value);
     const svg = $('fd-bars');
-    hbars(svg, rows, { max: 1, labelW: 300, fmt: v => v.toFixed(2) });
+    hbars(svg, rows, { max: 1, labelW: 300, top: 34, fmt: v => v.toFixed(2) });
     T(svg, 856, 20, (up ? 'Higher' : 'Lower') + ' is better', { 'text-anchor': 'end', class: 'svg-small' });
     // Paired dots: interruption C_RESPOND and C_RESUME of a non-interruption scenario
     const ys = si === 0 ? 1 : si, ycol = ys * 2 + 1;
