@@ -347,6 +347,13 @@ table.tbl td code { white-space: nowrap; }
 .tok-card .tbl td:first-child { white-space: nowrap; }
 .tok-ex { display: flex; flex-direction: column; gap: 10px; }
 .tok-ex mark { background: var(--accent-soft); color: var(--ink); border-radius: 4px; padding: 0 2px; }
+/* Compact pacing demo (slide 13) */
+.pace-mini { flex-direction: row; align-items: center; gap: 24px; padding: 12px 24px; flex: none; }
+.pace-ctl { display: flex; flex-direction: column; gap: 6px; flex: 1; min-width: 0; font-size: 22px; }
+.pace-top { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.pace-ctl .readout { font-size: 22px; }
+.pace-ctl .try { font-size: 20px; }
+.pace-mini svg { flex: none; width: 820px; }
 /* Key points: a bold anchor phrase with one short supporting line */
 .points { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 26px; }
 .points.row { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 64px; }
@@ -813,36 +820,58 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
 <!-- 10. Eq 2 pacing -->
 <section class="slide" data-type="interactive" data-title="Speech pacing, Eq. 2">
   <h2>The scheduler paces text to match speech playback</h2>
-  <div class="cols wide-right">
-    <div class="stack">
-      <div class="math">\[ n_k = \arg\min_{n} \left| \tau_{k-1} + \mathcal{D}(Y_{k,1:n}) - t_k \right| \]</div>
-      <ul class="symbols">
-        <li><span class="sym">\( t_k \)</span> The end of chunk \(k\).</li>
-        <li><span class="sym">\( \tau_{k-1} \)</span> The end time of the speech that the model scheduled before.</li>
-        <li><span class="sym">\( \mathcal{D}(Y_{k,1:n}) \)</span> The estimated speech time of the first \(n\) text tokens.</li>
-        <li><span class="sym">\( n_k \)</span> The number of text tokens for this chunk.</li>
-      </ul>
-      <ul class="points">
-        <li class="point"><b>Effect</b><span>When speech lags, the model writes fewer tokens. When playback has room, it writes more.</span></li>
-      </ul>
+  <svg class="fig" width="1680" height="600" viewBox="0 0 1680 600" role="img" aria-label="Equation 2 with each symbol explained. The scheduler sits inside the frontend step between the Thinker and the Talker. It reads playback progress, the estimated speech time of candidate tokens, and the chunk boundary, and keeps the number of tokens that best fills the chunk.">
+<defs><marker id="a2m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker><marker id="a2u" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--accent)"/></marker><marker id="a2t" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#0F8A5F"/></marker><marker id="a2d" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#B86E00"/></marker><marker id="a2k" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6B4FBB"/></marker></defs>
+<text x="0" y="30" class="svg-label strong">Where the scheduler sits</text>
+<text x="0" y="62" class="svg-small">Inside the frontend step <tspan font-style="italic">F</tspan><tspan font-size="14" dy="5">m</tspan><tspan dy="-5"> (slide 10).</tspan></text>
+<text x="0" y="88" class="svg-small">It runs once per chunk, between</text>
+<text x="0" y="114" class="svg-small">the Thinker and the Talker.</text>
+<rect x="440" y="6" width="850" height="118" rx="12" class="group-bg"/>
+<text x="458" y="30" class="svg-small">Frontend step, chunk <tspan font-style="italic">k</tspan></text>
+<g class="box"><rect x="460" y="44" width="230" height="64" rx="8"/><text x="575" y="72" text-anchor="middle">Thinker</text><text x="575" y="98" text-anchor="middle" class="svg-small">writes candidate text</text></g>
+<g class="box on"><rect x="760" y="44" width="250" height="64" rx="8"/><text x="885" y="72" text-anchor="middle">Scheduler: Eq. 2</text><text x="885" y="98" text-anchor="middle" class="svg-small">keeps the first <tspan font-style="italic">n</tspan><tspan font-size="13" dy="4">k</tspan><tspan dy="-4"> tokens</tspan></text></g>
+<g class="box"><rect x="1080" y="44" width="190" height="64" rx="8"/><text x="1175" y="72" text-anchor="middle">Talker</text><text x="1175" y="98" text-anchor="middle" class="svg-small">makes speech</text></g>
+<g class="box out"><rect x="1390" y="44" width="290" height="64" rx="8"/><text x="1535" y="72" text-anchor="middle">Playback</text><text x="1535" y="98" text-anchor="middle" class="svg-small">the user hears it</text></g>
+<path class="edge" d="M690 76 L760 76" marker-end="url(#a2m)"/>
+<path class="edge" d="M1010 76 L1080 76" marker-end="url(#a2m)"/>
+<path class="edge" d="M1270 76 L1390 76" marker-end="url(#a2m)"/>
+<text x="1330" y="66" text-anchor="middle" class="svg-small">speech</text>
+<path class="ann-line" style="stroke:#0F8A5F" d="M1535 108 V140 H885 V112" marker-end="url(#a2t)"/>
+<text x="1210" y="158" text-anchor="middle" class="svg-small" style="fill:#0F8A5F">playback progress: when the queued speech ends</text>
+<text x="0" y="202" class="svg-head">Inputs</text><text x="0" y="234" class="svg-small">What the scheduler reads</text>
+<foreignObject x="470" y="172" width="340" height="140"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#0F8A5F"><b>Playback progress</b>When the speech that is already scheduled will end.<span class="ex">Example: queued speech ends at 0.3 s</span></div></foreignObject>
+<path class="ann-line" style="stroke:#0F8A5F" d="M640 312 C640 334 750 320 750 342" marker-end="url(#a2t)"/>
+<foreignObject x="830" y="172" width="340" height="140"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#B86E00"><b>Estimated speech time</b>How long the first <i>n</i> candidate text tokens take to say.<span class="ex">Example: 0.7 s for "I found one."</span></div></foreignObject>
+<path class="ann-line" style="stroke:#B86E00" d="M1000 312 C1000 334 985 320 985 342" marker-end="url(#a2d)"/>
+<foreignObject x="1190" y="172" width="340" height="140"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#6B4FBB"><b>End of chunk <i>k</i></b>The chunk boundary on the shared clock.<span class="ex">Example: the 1 s mark</span></div></foreignObject>
+<path class="ann-line" style="stroke:#6B4FBB" d="M1360 312 C1360 334 1210 320 1210 342" marker-end="url(#a2k)"/>
+<text x="330" y="392" text-anchor="middle" class="eq-t user"><tspan class="v">n</tspan><tspan class="sb" dy="14">k</tspan></text>
+<text x="410" y="392" text-anchor="middle" class="eq-t">=</text>
+<text x="545" y="392" text-anchor="middle" class="eq-t">arg min</text>
+<text x="572" y="432" text-anchor="middle" class="eq-t"><tspan class="sb">n</tspan></text>
+<text x="670" y="392" text-anchor="middle" class="eq-t">|</text>
+<text x="750" y="392" text-anchor="middle" class="eq-t" style="fill:#0F8A5F"><tspan class="v">&#964;</tspan><tspan class="sb" dy="14">k&#8722;1</tspan></text>
+<text x="840" y="392" text-anchor="middle" class="eq-t">+</text>
+<text x="985" y="392" text-anchor="middle" class="eq-t" style="fill:#B86E00">&#119967;(<tspan class="v">Y</tspan><tspan class="sb" dy="14">k,1:n</tspan><tspan dy="-14">)</tspan></text>
+<text x="1140" y="392" text-anchor="middle" class="eq-t">&#8722;</text>
+<text x="1210" y="392" text-anchor="middle" class="eq-t" style="fill:#6B4FBB"><tspan class="v">t</tspan><tspan class="sb" dy="14">k</tspan></text>
+<text x="1270" y="392" text-anchor="middle" class="eq-t">|</text>
+<path class="ann-line" d="M677 422 V432 H1263 V422"/>
+<foreignObject x="80" y="455" width="340" height="140"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card user"><span class="tag">Reaches the user</span><b>Tokens for this chunk</b>The first <i>n</i><sub>k</sub> candidate tokens become <i>Y</i><sub>k</sub>. The Talker speaks them.</div></foreignObject>
+<path class="ann-line user" d="M250 455 C250 437 330 442 330 424" marker-end="url(#a2u)"/>
+<foreignObject x="440" y="455" width="340" height="140"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card priv"><b>Pick the best <i>n</i></b>Try <i>n</i> = 0, 1, 2, ... and keep the <i>n</i> with the smallest gap.</div></foreignObject>
+<path class="ann-line" d="M610 455 C610 437 572 460 572 442" marker-end="url(#a2m)"/>
+<foreignObject x="810" y="455" width="340" height="140"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card priv"><b>The gap</b>How far the predicted end of speech misses the chunk boundary.</div></foreignObject>
+<path class="ann-line" d="M980 455 C980 437 970 452 970 434" marker-end="url(#a2m)"/>
+<foreignObject x="1190" y="449" width="490" height="140"><div xmlns="http://www.w3.org/1999/xhtml"><ul class="points"><li class="point"><b>Effect</b><span style="font-size:22px">When speech lags, the model writes fewer tokens. When playback has room, it writes more.</span></li></ul></div></foreignObject>
+</svg>
+  <div class="interactive pace-mini" id="w-pace">
+    <div class="pace-ctl">
+      <div class="pace-top"><label>Speech still queued, &#964;<sub>k&#8722;1</sub> <input id="pc-back" type="range" min="0" max="1.2" step="0.05" value="0.3" aria-label="Queued speech in seconds"> <span class="mono" id="pc-back-v"></span></label><button class="reset" type="button">Reset</button></div>
+      <div class="readout"><span><i>n</i><sub>k</sub> = <b id="pc-n"></b></span><span>Gap: <b id="pc-gap"></b></span><span><b id="pc-txt"></b></span></div>
+      <p class="try"><strong>Try:</strong> Move the slider right. Fewer tokens fit.</p>
     </div>
-    <div class="interactive" id="w-pace">
-      <div class="interactive-head">
-        <button class="reset" type="button">Reset</button>
-      </div>
-      <div class="controls">
-        <label>Speech backlog <input id="pc-back" type="range" min="0" max="1.5" step="0.05" value="0.3" aria-label="Speech backlog in seconds"> <span class="mono" id="pc-back-v"></span></label>
-        <label>Seconds per token <input id="pc-spt" type="range" min="0.12" max="0.45" step="0.01" value="0.22" aria-label="Seconds per token"> <span class="mono" id="pc-spt-v"></span></label>
-      </div>
-      <svg id="pc-time" class="fig" width="920" height="150" viewBox="0 0 920 150" role="img" aria-label="Playback timeline"></svg>
-      <svg id="pc-bars" class="fig" width="920" height="280" viewBox="0 0 920 280" role="img" aria-label="Error for each candidate n"></svg>
-      <div class="readout">
-        <span>Time left: <b id="pc-left"></b></span>
-        <span>\(n_k\): <b id="pc-n"></b></span>
-        <span>Text: <b id="pc-txt"></b></span>
-      </div>
-      <p class="try"><strong>Try:</strong> Move the backlog slider to the right. Look at the value of n.</p>
-    </div>
+    <svg id="pc-time" class="fig" width="820" height="110" viewBox="0 0 900 110" role="img" aria-label="Playback timeline for chunk k"></svg>
   </div>
   <p class="sources"><span class="source">Sec 4.3</span><span class="source">Eq. 2</span></p>
 </section>
@@ -1671,41 +1700,29 @@ const OURS = /Realtime-Venus/;
 /* 10. Speech pacing, Eq. 2 */
 (function () {
   const root = $('w-pace'); if (!root) return;
-  const back = $('pc-back'), spt = $('pc-spt'), tl = $('pc-time'), bars = $('pc-bars');
-  const words = ['Aim', 'for', 'five', 'to', 'seven', 'hours', 'a', 'day,', 'and', 'take'];
+  const back = $('pc-back'), tl = $('pc-time');
+  const words = ['I', 'found', 'one.', 'Trattoria', 'Roma', 'is', '400', 'm', 'away.'];
+  const dur = words.map(w => 0.22 * (0.7 + 0.1 * w.length));
+  const D = [0]; dur.forEach((d, i) => D.push(D[i] + d));
   function render() {
-    const tau = +back.value, s = +spt.value;
+    const tau = +back.value;
     $('pc-back-v').textContent = tau.toFixed(2) + ' s';
-    $('pc-spt-v').textContent = s.toFixed(2) + ' s';
-    const dur = words.map(w => s * (0.7 + 0.1 * w.length));
-    const D = [0]; dur.forEach((d, i) => D.push(D[i] + d));
     const err = D.map(d => Math.abs(tau + d - 1));
     let n = 0; err.forEach((e, i) => { if (e < err[n]) n = i; });
-    // Timeline
     clear(tl);
-    const X0 = 40, X1 = 900, TM = 2.5, x = t => X0 + t * (X1 - X0) / TM;
-    S('line', { x1: X0, x2: X1, y1: 100, y2: 100, class: 'axis-line' }, tl);
-    [0, 0.5, 1, 1.5, 2, 2.5].forEach(t => { S('line', { x1: x(t), x2: x(t), y1: 95, y2: 105, class: 'axis-line' }, tl); T(tl, x(t), 130, t + ' s', { 'text-anchor': 'middle', class: 'svg-small' }); });
-    if (tau > 0) { S('rect', { x: x(0), y: 40, width: x(tau) - x(0), height: 46, rx: 4, class: 'c-block' }, tl); if (tau > 0.4) T(tl, (x(0) + x(tau)) / 2, 70, 'earlier speech', { 'text-anchor': 'middle', class: 'seg-label on-clear' }); }
-    if (n > 0) { S('rect', { x: x(tau), y: 40, width: x(tau + D[n]) - x(tau), height: 46, rx: 4, class: 'c-asst' }, tl); T(tl, (x(tau) + x(tau + D[n])) / 2, 70, 'new text', { 'text-anchor': 'middle', class: 'seg-label' }); }
-    S('line', { x1: x(1), x2: x(1), y1: 20, y2: 108, class: 'thr-line' }, tl);
-    T(tl, x(1) + 8, 30, 't_k', { class: 'svg-mono' });
-    // Bars
-    clear(bars);
-    const BX0 = 70, bw = (900 - BX0) / D.length, H = 220, maxE = 2.5;
-    T(bars, 10, 24, '|error| in seconds for each candidate n', { class: 'svg-small' });
-    err.forEach((e, i) => {
-      const h = Math.max(2, Math.min(e, maxE) / maxE * (H - 50));
-      S('rect', { x: BX0 + i * bw + 8, y: H - h, width: bw - 16, height: h, rx: 3, class: i === n ? 'bar-ours' : 'bar-other' }, bars);
-      T(bars, BX0 + i * bw + bw / 2, H - h - 8, e.toFixed(2), { 'text-anchor': 'middle', class: 'svg-small' });
-      T(bars, BX0 + i * bw + bw / 2, H + 28, 'n=' + i, { 'text-anchor': 'middle', class: i === n ? 'svg-label strong' : 'svg-small' });
-    });
-    $('pc-left').textContent = (1 - tau).toFixed(2) + ' s';
+    const X0 = 20, X1 = 880, TM = 2, x = t => X0 + t * (X1 - X0) / TM;
+    S('line', { x1: X0, x2: X1, y1: 80, y2: 80, class: 'axis-line' }, tl);
+    [0, 0.5, 1, 1.5, 2].forEach(t => { S('line', { x1: x(t), x2: x(t), y1: 75, y2: 85, class: 'axis-line' }, tl); T(tl, x(t), 104, t + ' s', { 'text-anchor': 'middle', class: 'svg-small' }); });
+    if (tau > 0) { S('rect', { x: x(0), y: 26, width: x(tau) - x(0), height: 44, rx: 4, class: 'c-block' }, tl); if (tau > 0.35) T(tl, (x(0) + x(tau)) / 2, 55, 'queued speech', { 'text-anchor': 'middle', class: 'seg-label on-clear' }); }
+    if (n > 0) { S('rect', { x: x(tau), y: 26, width: x(tau + D[n]) - x(tau), height: 44, rx: 4, class: 'c-asst' }, tl); T(tl, (x(tau) + x(tau + D[n])) / 2, 55, n + ' new tokens', { 'text-anchor': 'middle', class: 'seg-label' }); }
+    S('line', { x1: x(1), x2: x(1), y1: 8, y2: 88, class: 'thr-line' }, tl);
+    T(tl, x(1) + 8, 18, 'end of chunk k', { class: 'svg-small' });
     $('pc-n').textContent = n;
-    $('pc-txt').textContent = n ? '"' + words.slice(0, n).join(' ') + '"' : 'none, speech lags';
+    $('pc-gap').textContent = err[n].toFixed(2) + ' s';
+    $('pc-txt').textContent = n ? '"' + words.slice(0, n).join(' ') + '"' : 'no new text: queued speech fills the chunk';
   }
-  back.addEventListener('input', render); spt.addEventListener('input', render);
-  Deck.onReset(root, () => { back.value = 0.3; spt.value = 0.22; render(); });
+  back.addEventListener('input', render);
+  Deck.onReset(root, () => { back.value = 0.3; render(); });
   render();
 })();
 
