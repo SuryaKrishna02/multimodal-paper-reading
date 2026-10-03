@@ -1268,9 +1268,10 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
       <span class="badge data">Data from paper</span>
       <button class="reset" type="button">Reset</button>
     </div>
-    <div class="controls">
+    <div class="controls" style="column-gap:24px">
       <div class="choice" id="fd-s"></div>
       <div class="choice" id="fd-m"></div>
+      <span id="fd-hint" style="font-size:21px;white-space:nowrap"></span>
     </div>
     <div class="row" style="align-items:flex-start;gap:40px">
       <svg id="fd-bars" class="fig" width="860" height="470" viewBox="0 0 860 470" role="img" aria-label="Full-Duplex-Bench bars"></svg>
@@ -2374,6 +2375,7 @@ const OURS = /Realtime-Venus/;
   const m = choice($('fd-m'), [{ v: 0, label: 'C_RESPOND' }, { v: 1, label: 'C_RESUME' }], 0, render);
   function render() {
     const si = +s.v, mi = +m.v, col = si * 2 + mi;
+    $('fd-hint').innerHTML = 'Right reaction: <b>' + (si === 0 ? 'respond' : 'keep talking') + '</b>';
     const up = si === 0 ? mi === 0 : mi === 1; // preferred direction
     const rows = M.map(r => ({ label: r[0], value: r[1][col], ours: OURS.test(r[0]) }))
       .sort((p, q) => up ? q.value - p.value : p.value - q.value);
@@ -2383,10 +2385,12 @@ const OURS = /Realtime-Venus/;
     // Paired dots: interruption C_RESPOND and C_RESUME of a non-interruption scenario
     const ys = si === 0 ? 1 : si, ycol = ys * 2 + 1;
     const sc = $('fd-sc'); clear(sc);
-    const LX = 250, RX = 690, top = 70, rh = 44;
+    const LX = 250, RX = 690, top = 122, rh = 40;
     const px = v => LX + v * (RX - LX);
     T(sc, 0, 24, 'Circle: interruption C_RESPOND', { class: 'svg-small' });
     T(sc, 0, 50, 'Square: ' + SC[ys].label.toLowerCase() + ' C_RESUME', { class: 'svg-small' });
+    T(sc, 0, 80, 'Right is better for both shapes.', { class: 'svg-small', style: 'fill:var(--ink)' });
+    T(sc, 0, 104, 'Square left: stops too easily. Circle left: misses interruptions.', { class: 'svg-small', style: 'fill:var(--ink)' });
     [0, 0.5, 1].forEach(v => { S('line', { x1: px(v), x2: px(v), y1: top - 8, y2: top + rh * M.length, class: 'grid-line' }, sc); T(sc, px(v), top + rh * M.length + 26, v.toFixed(1), { 'text-anchor': 'middle', class: 'svg-small' }); });
     M.forEach((r, i) => {
       const y = top + i * rh + rh / 2, ours = OURS.test(r[0]);
