@@ -534,7 +534,7 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
   <h2>Primer: the Thinker writes text, the Talker writes speech</h2>
   <div class="cols wide-right">
     <ul class="points">
-      <li class="point"><b>Base model</b><span>MiniCPM-o 4.5, an open 9B model.</span></li>
+      <li class="point"><b>Inherited from MiniCPM-o 4.5</b><span>Realtime-Venus keeps the architecture of this open 9B model (the shaded area). It adds the delegate path.</span></li>
       <li class="point"><b>Thinker</b><span>The language model. It reads the encoded audio and video, decides to listen or speak, and writes the reply text.</span></li>
       <li class="point"><b>Talker</b><span>It reads the <span class="term" tabindex="0" data-def="The internal vectors of the language model for each token. They carry meaning and context.">hidden states</span> and the reply text of the Thinker. It writes S3 speech tokens. A flow-matching decoder turns them into the audio that the user hears.</span></li>
       <li class="point step"><b>One meaning, two outputs</b><span>Text and speech share one meaning. The speech side does not need its own language model.</span></li>
@@ -542,9 +542,13 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
     <figure>
       <svg class="fig" width="1000" height="610" viewBox="0 0 1000 610" role="img" aria-label="Thinker and Talker diagram: inputs go through encoders to the Thinker; reply text and hidden states go to the Talker; a decoder makes the speech that the user hears; delegate text goes to the harness">
         <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="currentColor" style="color:var(--muted)"/></marker></defs>
+        <path class="group-bg" d="M8 34 H680 V340 H992 V478 H308 V272 H8 Z" stroke-linejoin="round"/>
+        <text x="20" y="306" class="svg-label strong">MiniCPM-o 4.5</text>
+        <text x="20" y="334" class="svg-small">Shaded: architecture that</text>
+        <text x="20" y="360" class="svg-small">Realtime-Venus inherits</text>
         <text x="20" y="24" class="svg-small">From the user</text>
         <text x="320" y="24" class="svg-small">Understand and decide</text>
-        <text x="700" y="24" class="svg-small">Background</text>
+        <text x="700" y="24" class="svg-small">Added by Realtime-Venus</text>
         <text x="320" y="352" class="svg-small">Speak</text>
         <g class="box"><rect x="20" y="40" width="220" height="90" rx="8"/><text x="130" y="80" text-anchor="middle">Video frames</text><text x="130" y="112" text-anchor="middle" class="svg-small">SigLIP2 encoder</text></g>
         <g class="box"><rect x="20" y="170" width="220" height="90" rx="8"/><text x="130" y="210" text-anchor="middle">Audio stream</text><text x="130" y="242" text-anchor="middle" class="svg-small">Whisper encoder</text></g>
