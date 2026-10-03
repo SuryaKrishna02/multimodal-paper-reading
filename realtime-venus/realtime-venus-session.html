@@ -1323,7 +1323,7 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
 <!-- 24b. Delegate benchmark -->
 <section class="slide" data-type="content" data-title="Results: delegation">
   <h2>Delegation: Audio hands off too often</h2>
-  <p style="margin:0 0 18px;font-size:26px;color:var(--ink-2)">For each request, the model decides: answer it in the frontend, or delegate it to the harness. The benchmark compares this choice with a reference label.</p>
+  <p style="margin:0 0 18px;font-size:26px;color:var(--ink-2);max-width:none">For each request, the model decides: answer it in the frontend, or delegate it to the harness. The benchmark compares this choice with a reference label.</p>
   <div class="cols" style="grid-template-columns:700fr 820fr;gap:48px">
     <div class="stack" style="gap:8px">
       <h3>Delegate benchmark (Table 8)</h3>
@@ -1343,6 +1343,7 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
 <!-- 25. Memory ablation -->
 <section class="slide" data-type="interactive" data-title="Ablation: memory">
   <h2>Ablation: what memory adds on long videos</h2>
+  <p style="margin:0 0 16px;font-size:24px;color:var(--ink-2);max-width:none">The memory module (slides 17 and 18) needs no training. So each model runs twice on long-video benchmarks: without memory and with memory. Videos are grouped by length. This is the only ablation in the paper.</p>
   <div class="interactive" id="w-abl">
     <div class="interactive-head">
       <span class="badge data">Data from paper</span>
@@ -1352,10 +1353,10 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
       <div class="choice" id="ab-bb"></div>
       <label><input id="ab-mem" type="checkbox" checked> Memory on</label>
     </div>
-    <svg id="ab-svg" class="fig" width="1640" height="440" viewBox="0 0 1640 440" role="img" aria-label="Accuracy for each duration bin with and without memory"></svg>
+    <svg id="ab-svg" class="fig" width="1640" height="356" viewBox="0 0 1640 356" role="img" aria-label="Accuracy for each duration bin with and without memory"></svg>
+    <ul class="points row compact" id="ab-take"></ul>
     <p class="try"><strong>Try:</strong> Select MiniCPM-o 4.5. Look at the LongVideoBench bins.</p>
   </div>
-  <p class="note">This is the only ablation in the paper. The paper has no ablation of the training components.</p>
   <p class="sources"><span class="source">Table 3</span><span class="source">Sec 7.3</span></p>
 </section>
 
@@ -2492,11 +2493,22 @@ const OURS = /Realtime-Venus/;
     mini: { base: [38.58, 38.56, 32.35, 34.27, 36.10, 34.58, 52.89, 55.56], mem: [38.80, 39.89, 38.24, 44.71, 45.37, 43.93, 51.90, 55.56] },
     rv: { base: [35.48, 42.91, 41.18, 47.84, 46.63, 49.53, 52.89, 57.14], mem: [36.36, 43.10, 47.06, 48.71, 48.31, 50.47, 53.29, 61.90] }
   };
+  const TAKE = {
+    rv: [['Gains in every bin', 'The largest gains are on the longest videos: +5.88 on LVOmniBench 60 to 90 min and +4.76 on LongVideoBench 40 to 60 min.'],
+      ['Why it helps', 'The rolling context window drops early frames. Memory brings back the old frames that match the question.']],
+    mini: [['It also helps another model', 'Large gains on CGBench (+9.27 to +10.44) and +5.89 on LVOmniBench 60 to 90 min.'],
+      ['But not everywhere', 'On LongVideoBench: -0.99 and 0.00. The benefit depends on the model and the benchmark.']]
+  };
   const bb = choice($('ab-bb'), [{ v: 'rv', label: 'Realtime-Venus-Omni' }, { v: 'mini', label: 'MiniCPM-o 4.5' }], 'rv', render);
   const mem = $('ab-mem');
   function render() {
     const svg = $('ab-svg'); clear(svg);
-    const d = D[bb.v], X0 = 70, gw = (1630 - X0) / 8, Y0 = 350, HH = 290, MAX = 70;
+    const d = D[bb.v], X0 = 70, gw = (1630 - X0) / 8, Y0 = 270, HH = 180, MAX = 70;
+    S('rect', { x: 1250, y: 8, width: 22, height: 22, rx: 4, class: 'bar-other' }, svg);
+    T(svg, 1280, 26, 'without memory', { class: 'svg-label' });
+    S('rect', { x: 1470, y: 8, width: 22, height: 22, rx: 4, class: 'bar-ours' }, svg);
+    T(svg, 1500, 26, 'with memory', { class: 'svg-label' });
+    if (mem.checked) T(svg, 0, 26, 'Gain from memory, in accuracy points:', { class: 'svg-small' });
     S('line', { x1: X0, x2: 1630, y1: Y0, y2: Y0, class: 'axis-line' }, svg);
     [0, 20, 40, 60].forEach(v => { const y = Y0 - v / MAX * HH; S('line', { x1: X0, x2: 1630, y1: y, y2: y, class: 'grid-line' }, svg); T(svg, X0 - 10, y + 7, String(v), { 'text-anchor': 'end', class: 'svg-small' }); });
     BINS.forEach((b, i) => {
@@ -2505,16 +2517,19 @@ const OURS = /Realtime-Venus/;
       draw(d.base[i], gx + 24, 'bar-other');
       if (mem.checked) {
         draw(d.mem[i], gx + 96, 'bar-ours');
-        const delta = d.mem[i] - d.base[i];
-        T(svg, gx + gw / 2, 40, (delta >= 0 ? '+' : '') + delta.toFixed(2), { 'text-anchor': 'middle', class: 'svg-label strong' });
+        const delta = d.mem[i] - d.base[i], col = delta > 0.005 ? '#0F8A5F' : delta < -0.005 ? '#E5583A' : 'var(--muted)';
+        S('rect', { x: gx + gw / 2 - 44, y: 42, width: 88, height: 32, rx: 16, fill: 'none', stroke: col, 'stroke-width': 2 }, svg);
+        T(svg, gx + gw / 2, 65, (delta > 0.005 ? '+' : '') + delta.toFixed(2), { 'text-anchor': 'middle', class: 'svg-label strong', style: 'fill:' + col });
       }
-      T(svg, gx + gw / 2, Y0 + 30, b[1] + ' min', { 'text-anchor': 'middle', class: 'svg-small' });
-      if (i === 0 || BINS[i - 1][0] !== b[0]) T(svg, gx + 10, Y0 + 60, b[0], { class: 'svg-label' });
+      T(svg, gx + gw / 2, Y0 + 28, b[1] + ' min', { 'text-anchor': 'middle', class: 'svg-small' });
     });
-    S('rect', { x: 1240, y: 396, width: 22, height: 22, rx: 4, class: 'bar-other' }, svg);
-    T(svg, 1270, 414, 'without memory', { class: 'svg-label' });
-    S('rect', { x: 1440, y: 396, width: 22, height: 22, rx: 4, class: 'bar-ours' }, svg);
-    T(svg, 1470, 414, 'with memory', { class: 'svg-label' });
+    ['LVOmniBench', 'CGBench', 'LongVideoBench'].forEach(name => {
+      const idx = BINS.map((b, i) => b[0] === name ? i : -1).filter(i => i >= 0);
+      const xa = X0 + idx[0] * gw + 14, xb = X0 + (idx[idx.length - 1] + 1) * gw - 14;
+      S('path', { d: 'M' + xa + ' 296 V304 H' + xb + ' V296', class: 'axis-line', fill: 'none' }, svg);
+      T(svg, (xa + xb) / 2, 332, name, { 'text-anchor': 'middle', class: 'svg-label' });
+    });
+    $('ab-take').innerHTML = TAKE[bb.v].map(t => '<li class="point"><b>' + t[0] + '</b><span>' + t[1] + '</span></li>').join('');
   }
   mem.addEventListener('change', render);
   Deck.onReset(root, () => { bb.set('rv'); mem.checked = true; render(); });
