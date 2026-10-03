@@ -536,7 +536,7 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
     <ul class="points">
       <li class="point"><b>Inherited from MiniCPM-o 4.5</b><span>Realtime-Venus keeps the architecture of this open 9B model (the shaded area). It adds the delegate path.</span></li>
       <li class="point"><b>Thinker</b><span>The language model. It reads the encoded audio and video, decides to listen or speak, and writes the reply text.</span></li>
-      <li class="point"><b>Talker</b><span>It reads the <span class="term" tabindex="0" data-def="The internal vectors of the language model for each token. They carry meaning and context.">hidden states</span> and the reply text of the Thinker. It writes S3 speech tokens. A flow-matching decoder turns them into the audio that the user hears.</span></li>
+      <li class="point"><b>Talker</b><span>It reads the <span class="term" tabindex="0" data-def="The internal vectors of the language model for each token. They carry meaning and context.">hidden states</span> and the reply text of the Thinker. It writes S3 speech tokens one by one, like a small language model (as in <a href="https://arxiv.org/abs/2503.20215">Qwen2.5-Omni</a>). A flow-matching decoder turns them into the audio that the user hears.</span></li>
       <li class="point step"><b>One meaning, two outputs</b><span>Text and speech share one meaning. The speech side does not need its own language model.</span></li>
     </ul>
     <figure>
@@ -564,6 +564,8 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
         <text x="486" y="302" class="svg-label">reply text</text>
         <text x="486" y="332" class="svg-label">+ hidden states</text>
         <path class="edge" d="M620 415 L700 415" marker-end="url(#arr)"/>
+        <text x="470" y="512" text-anchor="middle" class="svg-small">Talker: likely a small autoregressive</text>
+        <text x="470" y="538" text-anchor="middle" class="svg-small">Transformer, as in Qwen2.5-Omni</text>
         <text x="840" y="290" text-anchor="middle" class="svg-small">reference voice</text>
         <text x="840" y="316" text-anchor="middle" class="svg-small">from the system prompt</text>
         <path class="edge" d="M840 326 L840 365" marker-end="url(#arr)"/>
