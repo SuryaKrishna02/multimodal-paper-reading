@@ -337,6 +337,16 @@ table.tbl td code { white-space: nowrap; }
 .ann-card.priv { border-top-color: #B8BFCC; }
 .ann-card code { font-size: 0.85em; }
 .ann-card sub, .ann-card sup { font-size: 0.7em; }
+/* Token tables (slide 12) */
+.tok-cols { flex: none; gap: 32px; align-items: stretch; }
+.card.tok-card { border-top-color: #B8BFCC; gap: 6px; }
+.card.tok-card.new { border-top-color: var(--accent); }
+.tok-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.tok-head b { font-family: var(--font-title); font-size: 30px; font-weight: 700; color: var(--ink); }
+.tok-card .tbl { width: 100%; }
+.tok-card .tbl td:first-child { white-space: nowrap; }
+.tok-ex { display: flex; flex-direction: column; gap: 10px; }
+.tok-ex mark { background: var(--accent-soft); color: var(--ink); border-radius: 4px; padding: 0 2px; }
 /* Key points: a bold anchor phrase with one short supporting line */
 .points { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 26px; }
 .points.row { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 64px; }
@@ -766,24 +776,38 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
 <!-- 9. Control tokens -->
 <section class="slide" data-type="content" data-title="Control tokens">
   <h2>Eight tokens control the conversation</h2>
-  <div class="cols">
-    <table class="tbl">
-      <tr><th>Token</th><th>Job</th></tr>
-      <tr><td><code>&lt;|listen|&gt;</code></td><td>Continue to perceive. Do not speak.</td></tr>
-      <tr><td><code>&lt;|speak|&gt;</code></td><td>Generate foreground text and speech now.</td></tr>
-      <tr><td><code>&lt;|chunk_eos|&gt;</code></td><td>Close the speech of this chunk.</td></tr>
-      <tr><td><code>&lt;|turn_eos|&gt;</code></td><td>Close the assistant turn.</td></tr>
-    </table>
-    <table class="tbl">
-      <tr><th>Token</th><th>Job</th></tr>
-      <tr><td><code>&lt;delegate&gt;</code></td><td>Open a private task request.</td></tr>
-      <tr><td><code>&lt;/delegate&gt;</code></td><td>Close the task request.</td></tr>
-      <tr><td><code>&lt;backend&gt;</code></td><td>Open a harness result. It is input, not a target.</td></tr>
-      <tr><td><code>&lt;/backend&gt;</code></td><td>Close the harness result.</td></tr>
-    </table>
+  <div class="cols tok-cols">
+    <div class="card tok-card">
+      <div class="tok-head"><b>Turn control</b><span class="chip">From the base model</span></div>
+      <table class="tbl">
+        <tr><th>Token</th><th>Job</th></tr>
+        <tr><td><code>&lt;|listen|&gt;</code></td><td>Continue to perceive. Do not speak.</td></tr>
+        <tr><td><code>&lt;|speak|&gt;</code></td><td>Generate foreground text and speech now.</td></tr>
+        <tr><td><code>&lt;|chunk_eos|&gt;</code></td><td>Close the speech of this chunk.</td></tr>
+        <tr><td><code>&lt;|turn_eos|&gt;</code></td><td>Close the assistant turn.</td></tr>
+      </table>
+    </div>
+    <div class="card tok-card new">
+      <div class="tok-head"><b>Delegation</b><span class="chip acc">New in Realtime-Venus</span></div>
+      <table class="tbl">
+        <tr><th>Token</th><th>Job</th></tr>
+        <tr><td><code>&lt;delegate&gt;</code></td><td>Open a private task request.</td></tr>
+        <tr><td><code>&lt;/delegate&gt;</code></td><td>Close the task request.</td></tr>
+        <tr><td><code>&lt;backend&gt;</code></td><td>Open a harness result. It is input, not a target.</td></tr>
+        <tr><td><code>&lt;/backend&gt;</code></td><td>Close the harness result.</td></tr>
+      </table>
+    </div>
   </div>
-  <p>The model writes the delegate span in natural language. The host hides it from the screen and from speech. The paper adds the four new tokens to the tokenizer, the input embeddings, and the LM head.</p>
-  <p class="sources"><span class="source">Sec 4.1</span><span class="source">Sec 4.3</span><span class="source">Sec 5.1</span></p>
+  <ul class="points row">
+    <li class="point"><b>Requests in plain language</b><span>The model writes the delegate span in natural language. The host hides it from the screen and from speech.</span></li>
+    <li class="point"><b>How the new tokens are added</b><span>The paper adds the four delegation tokens to the tokenizer, the input embeddings, and the LM head.</span></li>
+  </ul>
+  <div class="tok-ex">
+    <p class="note">Example from the paper: delegate in chunk 7, read the harness result in chunk 14. V, A: video and audio. T: text.</p>
+    <div class="unit-line">chunk 7: &nbsp;&lt;unit&gt; V A &#8594; &lt;|speak|&gt; <mark>&lt;delegate&gt;</mark> T <mark>&lt;/delegate&gt;</mark>&lt;|chunk_eos|&gt;&lt;|turn_eos|&gt; &lt;/unit&gt;</div>
+    <div class="unit-line">chunk 14: &lt;unit&gt; V A <mark>&lt;backend&gt;</mark> T <mark>&lt;/backend&gt;</mark> &#8594; &lt;|speak|&gt; T &lt;|chunk_eos|&gt;&lt;|turn_eos|&gt; &lt;/unit&gt;</div>
+  </div>
+  <p class="sources"><span class="source">Sec 4.1</span><span class="source">Sec 4.3</span><span class="source">Fig 6</span><span class="source">Sec 5.1</span></p>
 </section>
 
 <!-- 10. Eq 2 pacing -->
