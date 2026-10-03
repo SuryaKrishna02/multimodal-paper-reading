@@ -537,7 +537,7 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
       <li class="point"><b>Inherited from MiniCPM-o 4.5</b><span>Realtime-Venus keeps the architecture of this open 9B model (the shaded area). It adds the delegate path.</span></li>
       <li class="point"><b>Thinker</b><span>The language model. It reads the encoded audio and video, decides to listen or speak, and writes the reply text.</span></li>
       <li class="point"><b>Talker</b><span>A 0.3B autoregressive Llama decoder. It reads the <span class="term" tabindex="0" data-def="The internal vectors of the language model for each token. They carry meaning and context.">hidden states</span> and the reply text of the Thinker. It writes S3 speech tokens one by one. A flow-matching decoder turns them into the audio that the user hears.</span></li>
-      <li class="point"><b>One meaning, two outputs</b><span>Text and speech share one meaning. The speech side does not need its own language model.</span></li>
+      <li class="point"><b>One meaning, two outputs</b><span>The Thinker decides what to say and how. So the Talker can stay small (0.3B) and focus only on speech.</span></li>
     </ul>
     <figure>
       <svg class="fig" width="1000" height="610" viewBox="0 0 1000 610" role="img" aria-label="Thinker and Talker diagram: inputs go through encoders to the Thinker; reply text and hidden states go to the Talker; a decoder makes the speech that the user hears; delegate text goes to the harness">
