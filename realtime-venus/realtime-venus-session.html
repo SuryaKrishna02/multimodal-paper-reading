@@ -64,7 +64,6 @@ body.flow .cols > *, body.flow .interactive { min-width: 0; }
 body.flow .viz { width: 100%; height: auto; }
 body.flow input[type="range"] { width: 100%; }
 body.flow .option { font-size: 20px; min-height: 0; padding: 14px 16px; }
-body.flow .prompt { font-size: 22px; grid-template-columns: 36px 1fr; }
 body.flow .row { flex-wrap: wrap; }
 body.flow .badge, body.flow .try, body.flow .readout, body.flow .controls, body.flow .meet-hint, body.flow .explain, body.flow button { font-size: 16px; }
 body.flow #bar { gap: 8px; padding-left: 8px; padding-right: 8px; }
@@ -150,10 +149,6 @@ button.reset { font-size: 20px; padding: 4px 14px; }
 .revealed .reveal-btn { visibility: hidden; }
 .quiz-reveal .explain { font-size: 28px; max-width: 70ch; }
 
-/* ---------- Discussion ---------- */
-.prompts { list-style: none; padding: 0; counter-reset: p; display: grid; gap: 40px; margin-top: 24px; }
-.prompt { counter-increment: p; display: grid; grid-template-columns: 80px 1fr; gap: 24px; font-size: 40px; line-height: 1.3; font-family: var(--font-title); font-weight: 500; max-width: 48ch; }
-.prompt::before { content: counter(p); color: var(--coral); font-weight: 700; }
 
 /* ---------- Further reading ---------- */
 .reading { display: grid; grid-template-columns: 1fr 1fr; gap: 32px 64px; align-content: start; }
@@ -1381,7 +1376,7 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
 <section class="slide" data-type="divider" data-title="Section: Closing">
   <p class="eyebrow">Realtime-Venus</p>
   <h2>Closing</h2>
-  <p>Limitations, takeaways, discussion, and further reading.</p>
+  <p>Limitations, takeaways, and further reading.</p>
 </section>
 
 <!-- 27. Limitations -->
@@ -1408,15 +1403,6 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
     <li class="card"><b>Strong and weak</b><span>Continuation under backchannels and background speech is strong. Delegation decisions are still weak.</span></li>
   </ul>
   <p class="sources"><span class="source">Sec 3 to 8</span></p>
-</section>
-
-<!-- 29. Discussion -->
-<section class="slide" data-type="discussion" data-title="Discussion">
-  <h2>Discussion</h2>
-  <ol class="prompts">
-    <li class="prompt">The harness writes the reply text, but the frontend decides when to speak it. Is this the right split? What can go wrong when the conversation moves on?</li>
-    <li class="prompt">The Audio model delegates too much, and the Omni model delegates too little. Which error costs a user more? Should a learned token or a separate router make this decision?</li>
-  </ol>
 </section>
 
 <!-- 30. Further reading -->
