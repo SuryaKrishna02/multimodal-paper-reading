@@ -1597,7 +1597,7 @@ function choice(container, items, value, onChange) {
 function hbars(svg, rows, o) {
   clear(svg);
   const W = +svg.getAttribute('width'), H = +svg.getAttribute('height');
-  const lw = o.labelW || 340, right = 110, top = 6;
+  const lw = o.labelW || 340, right = o.right || 110, top = 6;
   const rh = (H - top - 6) / rows.length;
   const bh = Math.min(rh * 0.66, 42);
   const sc = v => Math.max(2, (v / o.max) * (W - lw - right));
@@ -1606,6 +1606,7 @@ function hbars(svg, rows, o) {
     T(svg, lw - 14, cy, r.label, { 'text-anchor': 'end', class: 'svg-label' + (r.ours ? ' strong' : '') });
     S('rect', { x: lw, y: y + (rh - bh) / 2, width: sc(r.value), height: bh, rx: 3, class: r.ours ? 'bar-ours' : (r.dim ? 'bar-dim' : 'bar-other') }, svg);
     T(svg, lw + sc(r.value) + 10, cy, o.fmt ? o.fmt(r.value) : String(r.value), { class: 'svg-value' + (r.ours ? ' strong' : '') });
+    if (r.tag) T(svg, W - 4, cy, r.tag, { 'text-anchor': 'end', class: 'svg-small', opacity: r.dim ? 0.45 : 1 });
   });
 }
 const OURS = /Realtime-Venus/;
@@ -2240,14 +2241,15 @@ const OURS = /Realtime-Venus/;
 (function () {
   const root = $('w-data'); if (!root) return;
   const ROWS = [
-    ['Video: general AV understanding', 936, 'v'], ['Video: visual-proactive duplex', 454, 'v'], ['Video: omni-proactive duplex', 201, 'v'],
-    ['Video: speech-in duplex', 315, 'v'], ['Video: delegate', 95, 'v'],
-    ['Audio: general audio understanding', 470, 'a'], ['Audio: spoken QA', 205, 'a'], ['Audio: speech-only duplex', 100, 'a'], ['Audio: delegate', 90, 'a']
+    ['Video: general AV understanding', 936, 'v', 'off'], ['Video: visual-proactive duplex', 454, 'v', 'dup'], ['Video: omni-proactive duplex', 201, 'v', 'dup'],
+    ['Video: speech-in duplex', 315, 'v', 'dup'], ['Video: delegate', 95, 'v', 'del'],
+    ['Audio: general audio understanding', 470, 'a', 'off'], ['Audio: spoken QA', 205, 'a', 'off'], ['Audio: speech-only duplex', 100, 'a', 'dup'], ['Audio: delegate', 90, 'a', 'del']
   ];
+  const SKILL = { off: 'offline understanding', dup: 'proactive duplex', del: 'delegation' };
   const m = choice($('dt-model'), [{ v: 'omni', label: 'Realtime-Venus-Omni' }, { v: 'audio', label: 'Realtime-Venus-Audio' }], 'omni', render);
   function render() {
     const use = r => m.v === 'omni' || r[2] === 'a';
-    hbars($('dt-svg'), ROWS.map(r => ({ label: r[0], value: r[1], ours: use(r), dim: !use(r) })), { max: 1000, labelW: 470, fmt: v => v + 'k' });
+    hbars($('dt-svg'), ROWS.map(r => ({ label: r[0], value: r[1], ours: use(r), dim: !use(r), tag: SKILL[r[3]] })), { max: 1000, labelW: 470, right: 260, fmt: v => v + 'k' });
     const sum = ROWS.filter(use).reduce((s, r) => s + r[1], 0);
     $('dt-sum').textContent = sum + 'k';
   }
