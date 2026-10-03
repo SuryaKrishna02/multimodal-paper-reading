@@ -1050,7 +1050,7 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
   <ul class="points row3 mem-steps">
     <li class="point"><b>1. Relevance: MaxSim</b><span>The question is split into tokens. Each token takes its best cosine match among a frame's visual tokens. The weighted sum of these best matches is the frame's relevance.</span></li>
     <li class="point"><b>2. Token weights: MAD</b><span>"Who" and "hands" match every frame about the same, so they cannot tell frames apart. MAD (median absolute deviation) measures how much a token's score varies across frames: more variation, more weight.</span></li>
-    <li class="point"><b>3. Novelty, then the pick</b><span>The top 5 by relevance are candidates. Novelty: how different a candidate looks from higher-ranked ones (a near copy gets 0). Score = <span class="nw">(1&#160;&#8722;&#160;<i>w</i>)&#160;relevance</span> + <i>w</i>&#160;novelty. Keep the top <i>k</i>.</span></li>
+    <li class="point"><b>3. Novelty, then the pick (MMR)</b><span>The top 5 by relevance are candidates. Novelty: how different a candidate looks from higher-ranked ones (a near copy gets 0). Score = <span class="nw">(1&#160;&#8722;&#160;<i>w</i>)&#160;relevance</span> + <i>w</i>&#160;novelty. Keep the top <i>k</i>.</span></li>
   </ul>
   <div class="interactive" id="w-memr">
     <div class="controls">
@@ -1065,8 +1065,8 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
     <div class="ctx-row" id="mr-ctx"></div>
     <p class="try"><strong>Try:</strong> Move the novelty weight above 0.7 and look at the repeated scene at 18:20. Then clear "MAD token weights".</p>
   </div>
-  <p class="note">The paper does not give the exact formula that combines relevance and novelty. This demo uses the weighted sum in step 3.</p>
-  <p class="sources"><span class="source">Sec 4.2</span><span class="source">Fig 5</span><span class="source"><a href="https://arxiv.org/abs/2004.12832">MaxSim: ColBERT</a></span></p>
+  <p class="note">Step 3 is the MMR rule: &#955;&#183;relevance &#8722; (1 &#8722; &#955;)&#183;similarity to frames ranked above. With novelty = 1 &#8722; similarity, <i>w</i> = 1 &#8722; &#955;. The paper does not give its &#955;.</p>
+  <p class="sources"><span class="source">Sec 4.2</span><span class="source">Fig 5</span><span class="source"><a href="https://arxiv.org/abs/2004.12832">MaxSim: ColBERT</a></span><span class="source"><a href="https://people.eng.unimelb.edu.au/ammoffat/sigir98/abstracts/carbonell.html">MMR: Carbonell and Goldstein, 1998</a></span></p>
 </section>
 
 <!-- 16. Architecture -->
