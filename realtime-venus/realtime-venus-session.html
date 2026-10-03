@@ -2051,8 +2051,8 @@ const OURS = /Realtime-Venus/;
     sig: { n: 'SigLIP2', x: 290, y: 40, w: 220, h: 80, role: 'The vision encoder (a ViT).', i: 'The frame of the current chunk.', o: 'Projected visual tokens V. The paper does not give the token count for each frame.', u: 'Omni only. The Audio model removes this branch.' },
     whi: { n: 'Whisper-Medium', x: 290, y: 230, w: 220, h: 80, role: 'The streaming audio encoder.', i: 'One second of 16 kHz audio.', o: 'Projected audio features A, about 10 for each second.', u: 'Omni and Audio' },
     mem: { n: 'Memory module', x: 290, y: 420, w: 220, h: 90, role: 'Training-free long-video memory. It gates, stores, and retrieves frames.', i: 'Sampled frames, audio, and the query.', o: 'Retrieved frames with their audio, in time order, before the recent window.', u: 'Omni only' },
-    llm: { n: 'Qwen3-8B Thinker', x: 560, y: 150, w: 210, h: 200, role: 'The language backbone. It predicts control, text, and delegate tokens.', i: 'Interleaved V and A tokens for each unit, plus backend text.', o: 'c_k, Y_k, D_k, and hidden states H.', u: 'Omni and Audio. Post-training updates only the Thinker.' },
-    har: { n: 'Delegate harness', x: 560, y: 430, w: 210, h: 80, role: 'Runs delegated tasks in the background.', i: 'Delegate text D_k from the Thinker.', o: 'A polished backend message for a later chunk.', u: 'Omni and Audio' },
+    llm: { n: 'Qwen3-8B Thinker', x: 560, y: 150, w: 210, h: 200, role: 'The language backbone. It predicts control, text, and delegate tokens.', i: 'Interleaved \\(V\\) and \\(A\\) tokens for each unit, plus backend text.', o: '\\(c_k\\), \\(Y_k\\), \\(D_k\\), and hidden states \\(H\\).', u: 'Omni and Audio. Post-training updates only the Thinker.' },
+    har: { n: 'Delegate harness', x: 560, y: 430, w: 210, h: 80, role: 'Runs delegated tasks in the background.', i: 'Delegate text \\(D_k\\) from the Thinker.', o: 'A polished backend message for a later chunk.', u: 'Omni and Audio' },
     tlk: { n: 'S3 token head', x: 800, y: 150, w: 210, h: 90, role: 'The Talker. It predicts discrete S3 speech tokens.', i: 'Thinker text and hidden states.', o: 'S3 speech tokens, about 25 for each second.', u: 'Omni and Audio. It stays fixed in post-training.' },
     dec: { n: 'Flow decoder', x: 800, y: 290, w: 210, h: 90, role: 'A streaming flow-matching decoder.', i: 'S3 tokens and reference audio from the system prompt.', o: 'Waveform chunks at 24 kHz.', u: 'Omni and Audio' }
   };
@@ -2081,7 +2081,11 @@ const OURS = /Realtime-Venus/;
   function render() {
     Object.keys(els).forEach(k => els[k].classList.toggle('on', k === sel));
     const p = P[sel];
-    $('arch-name').textContent = p.n; $('arch-role').textContent = p.role; $('arch-in').textContent = p.i; $('arch-out').textContent = p.o; $('arch-used').textContent = p.u;
+    const panel = $('arch-name').parentNode;
+    const mj = window.MathJax && window.MathJax.typesetPromise;
+    if (mj && window.MathJax.typesetClear) window.MathJax.typesetClear([panel]);
+    $('arch-name').textContent = p.n; $('arch-role').innerHTML = p.role; $('arch-in').innerHTML = p.i; $('arch-out').innerHTML = p.o; $('arch-used').innerHTML = p.u;
+    if (mj) window.MathJax.typesetPromise([panel]);
   }
   Deck.onReset(root, () => { sel = 'llm'; render(); });
   render();
