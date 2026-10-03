@@ -1223,11 +1223,18 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
       <div class="choice" id="vd-b"></div>
       <label><input id="vd-off" type="checkbox"> Show offline models</label>
     </div>
-    <svg id="vd-svg" class="fig" width="1640" height="560" viewBox="0 0 1640 560" role="img" aria-label="Video benchmark scores"></svg>
-    <p class="try"><strong>Try:</strong> Select ProactiveVideoQA. Then show the offline models.</p>
+    <div class="cols" style="grid-template-columns:1.2fr 1fr;gap:32px">
+      <svg id="vd-svg" class="fig" width="940" height="330" viewBox="0 0 940 330" role="img" aria-label="Video benchmark scores"></svg>
+      <div class="panel stack" style="gap:8px;font-size:22px">
+        <span class="badge" style="align-self:flex-start">What is measured</span>
+        <h3 id="vd-met"></h3>
+        <p id="vd-set" style="margin:0;color:var(--muted)"></p>
+        <p id="vd-how" style="margin:0"></p>
+      </div>
+    </div>
+    <p class="try"><strong>Try:</strong> Select ProactiveVideoQA, then OmniPro. Read how each is scored. Then show the offline models.</p>
   </div>
-  <p class="note">ProactiveVideoQA reports PAUC. OmniPro reports probe-mode accuracy. The other benchmarks report accuracy.</p>
-  <p class="sources"><span class="source">Table 2</span><span class="source">Sec 7.3</span></p>
+  <p class="sources"><span class="source">Table 2</span><span class="source">Sec 7.1</span><span class="source">Sec 7.3</span><span class="source"><a href="https://arxiv.org/abs/2507.09313">ProactiveVideoQA: PAUC</a></span><span class="source"><a href="https://arxiv.org/abs/2605.18577">OmniPro: probe mode</a></span></p>
 </section>
 
 <!-- 22. Audio results -->
@@ -2277,6 +2284,14 @@ const OURS = /Realtime-Venus/;
     ['MiniCPM-o 4.5 (9B)', [67.9, 60.7, 47.5, 25.6, 54.2, 79.4, 37.7, 36.7]],
     ['Realtime-Venus-Omni (9B)', [70.2, 64.7, 46.2, 29.0, 54.0, 81.3, 39.2, 38.9]]
   ];
+  const OFFLINE = { set: 'Offline. The model sees the sampled clip before it answers.', met: 'Accuracy', how: 'The share of audio-visual video questions answered correctly.' };
+  const MET = [
+    { set: 'Streaming. Questions come during the video. The model sees only the frames so far.', met: 'Accuracy', how: 'The share of questions answered correctly, over 18 tasks: real-time visual, omni-source, and contextual understanding.' },
+    { set: 'Streaming. Questions come during the video. The model sees only the frames so far.', met: 'Accuracy', how: 'The share of questions answered correctly, over 12 tasks: real-time perception, backward tracing of past events, and forward active responding.' },
+    { set: 'Streaming and proactive. The model decides by itself when to speak.', met: 'PAUC: proactive area under the curve', how: 'Each time the model speaks, an LLM judge scores its answers so far: 0 wrong, 1 partly right, 2 mostly right. PAUC is the area under this score-over-time curve, scaled to 0 to 100. The same right answer earns more when it comes earlier.' },
+    { set: 'Streaming. The benchmark asks the model at fixed times. Most samples need the audio.', met: 'Probe-mode accuracy', how: 'Around each event, the model is asked twice: 2 to 5 s before (right answer: "not yet") and 0 to 3 s after (the task answer: yes or no, a count, a state, or a letter). An event counts only if both answers are right.' },
+    OFFLINE, OFFLINE, OFFLINE, OFFLINE
+  ];
   const off = $('vd-off');
   const b = choice($('vd-b'), B.map((n, i) => ({ v: i, label: n })), 0, render);
   function render() {
@@ -2286,8 +2301,9 @@ const OURS = /Realtime-Venus/;
     rows.sort((p, q) => q.value - p.value);
     const svg = $('vd-svg');
     svg.setAttribute('height', off.checked ? 390 : 330);
-    svg.setAttribute('viewBox', '0 0 1640 ' + (off.checked ? 390 : 330));
-    hbars(svg, rows, { max: 100, labelW: 480, fmt: v => v.toFixed(1) });
+    svg.setAttribute('viewBox', '0 0 940 ' + (off.checked ? 390 : 330));
+    hbars(svg, rows, { max: 100, labelW: 440, fmt: v => v.toFixed(1) });
+    $('vd-set').textContent = MET[i].set; $('vd-met').textContent = MET[i].met; $('vd-how').textContent = MET[i].how;
   }
   off.addEventListener('change', render);
   Deck.onReset(root, () => { off.checked = false; b.set(0); render(); });
