@@ -74,7 +74,7 @@ body.flow #counter { min-width: 0; font-size: 13px; }
 /* ---------- Type ---------- */
 h1, h2, h3 { font-family: var(--font-head); color: var(--ink); margin: 0; line-height: 1.15; }
 h1 { font-family: var(--font-title); font-size: 88px; font-weight: 700; max-width: 22ch; letter-spacing: -0.01em; }
-h2 { font-size: 52px; font-weight: 500; color: var(--accent); max-width: 34ch; }
+h2 { font-size: 52px; font-weight: 500; color: var(--accent); max-width: none; }
 h3 { font-size: 30px; font-weight: 600; }
 p { margin: 0; max-width: 60ch; }
 ul, ol { margin: 0; padding-left: 1.2em; }
@@ -122,8 +122,8 @@ figcaption { font-size: 22px; color: var(--muted); margin-top: 12px; }
 .interactive > * { flex-shrink: 0; }
 .interactive .cols { flex: none; }
 .interactive-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.interactive-head > :first-child:not(.badge) { margin-left: auto; }
 .badge { font-size: 20px; font-weight: 600; padding: 4px 14px; border-radius: 999px; border: 2px solid currentColor; }
-.badge.sim { color: var(--accent-strong); }
 .badge.data { color: var(--ok-ink); background: var(--ok-bg); border-color: transparent; }
 .try { font-size: 24px; color: var(--ink-2); }
 .try strong { color: var(--ink); }
@@ -137,7 +137,7 @@ button:hover { border-color: var(--accent); }
 button.reset { font-size: 20px; padding: 4px 14px; }
 
 /* ---------- Quiz ---------- */
-.slide[data-type="quiz"] .question { max-width: 34ch; }
+.slide[data-type="quiz"] .question { max-width: none; }
 .options { list-style: none; padding: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
 .option { position: relative; display: flex; align-items: center; gap: 24px; margin: 0; padding: 26px 30px; min-height: 120px; background: var(--surface-2); border: 2px solid var(--line); border-radius: 10px; font-size: 32px; transition: opacity 0.25s, background 0.25s; }
 .option::before { content: attr(data-key); flex: none; min-width: 64px; height: 64px; padding: 0 12px; display: grid; place-items: center; border-radius: 32px; background: var(--accent); color: #FFFFFF; font-family: var(--font-head); font-weight: 700; font-size: 30px; }
@@ -453,7 +453,6 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
     </div>
     <div class="interactive" id="w-problem">
       <div class="interactive-head">
-        <span class="badge sim">Illustrative simulation</span>
         <button class="reset" type="button">Reset</button>
       </div>
       <div class="choice" id="pb-mode"></div>
@@ -481,7 +480,6 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
   <p>A <span class="term" tabindex="0" data-def="A short reply such as 'yes' or 'right'. It shows that the listener follows. It does not ask for the turn.">backchannel</span> must not stop the assistant. An <span class="term" tabindex="0" data-def="User speech that takes the turn, for example a correction or a new request.">interruption</span> must stop it.</p>
   <div class="interactive" id="w-chunks">
     <div class="interactive-head">
-      <span class="badge sim">Illustrative simulation</span>
       <div class="row" style="gap:12px">
         <button type="button" id="ck-prev">Previous chunk</button>
         <button type="button" id="ck-next">Next chunk</button>
@@ -604,7 +602,6 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
     </div>
     <div class="interactive" id="w-eq1">
       <div class="interactive-head">
-        <span class="badge sim">Illustrative simulation</span>
         <button class="reset" type="button">Reset</button>
       </div>
       <svg id="eq1-svg" class="fig" width="900" height="370" viewBox="0 0 900 370" role="img" aria-label="Inputs and outputs of one runtime step"></svg>
@@ -628,7 +625,6 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
   <p class="note">User, chunks 1 to 5: "Can my car with tail number 7 drive in Beijing today?" (adapted from Appendix B.2)</p>
   <div class="interactive" id="w-ser">
     <div class="interactive-head">
-      <span class="badge sim">Illustrative simulation</span>
       <div class="row" style="gap:12px">
         <button type="button" id="ser-prev">Previous chunk</button>
         <button type="button" id="ser-next">Next chunk</button>
@@ -688,7 +684,6 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
     </div>
     <div class="interactive" id="w-pace">
       <div class="interactive-head">
-        <span class="badge sim">Illustrative simulation</span>
         <button class="reset" type="button">Reset</button>
       </div>
       <div class="controls">
@@ -731,7 +726,6 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
   <h2>Same overlap, different meaning, different action</h2>
   <div class="interactive" id="w-ovl">
     <div class="interactive-head">
-      <span class="badge sim">Illustrative simulation</span>
       <button class="reset" type="button">Reset</button>
     </div>
     <div class="cols wide-right" style="gap:32px">
@@ -781,7 +775,6 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
   <p style="max-width:none">An hour of video does not fit in the context window. A training-free memory keeps a frame only if it differs enough from the previous frame, after <span class="term" tabindex="0" data-def="The module looks for the best shift of each small block of pixels. Camera motion then gives a small difference.">block motion matching</span>.</p>
   <div class="interactive" id="w-memc">
     <div class="interactive-head">
-      <span class="badge sim">Illustrative simulation</span>
       <button class="reset" type="button">Reset</button>
     </div>
     <div class="controls">
@@ -808,7 +801,6 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
   <h2>Retrieval balances relevance and novelty</h2>
   <div class="interactive" id="w-memr">
     <div class="interactive-head">
-      <span class="badge sim">Illustrative simulation</span>
       <button class="reset" type="button">Reset</button>
     </div>
     <div class="controls">
@@ -856,7 +848,6 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
   <h2>The harness: capture, dispatch, return</h2>
   <div class="interactive" id="w-har">
     <div class="interactive-head">
-      <span class="badge sim">Illustrative simulation</span>
       <div class="row" style="gap:12px">
         <button type="button" id="har-next">Next stage</button>
         <button class="reset" type="button">Reset</button>
@@ -895,7 +886,6 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
     </div>
     <div class="interactive" id="w-snap">
       <div class="interactive-head">
-        <span class="badge sim">Illustrative simulation</span>
         <button class="reset" type="button">Reset</button>
       </div>
       <div class="controls">
