@@ -322,6 +322,7 @@ table.tbl td code { white-space: nowrap; }
 .eq-s .sb { font-size: 20px; font-style: italic; }
 .ann-line { stroke: var(--muted); stroke-width: 2.5; fill: none; }
 .ann-line.user { stroke: var(--accent); }
+.ann-line.fb { stroke-dasharray: 7 5; }
 .ok-pill { fill: var(--accent-soft); fill-opacity: 0.35; stroke: var(--accent-soft); stroke-width: 2; }
 .ok-chip { fill: var(--accent); }
 .ok-chip-t { fill: #FFFFFF; font-family: "STIX Two Math", "Cambria Math", "Times New Roman", serif; font-style: italic; font-size: 22px; }
@@ -688,6 +689,8 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
 <text x="1384" y="735" class="svg-small">or the next step</text>
 <rect x="392" y="443" width="410" height="98" rx="16" class="ok-pill"/>
 <rect x="562" y="429" width="68" height="28" rx="14" class="ok-chip"/><text x="596" y="450" text-anchor="middle" class="ok-chip-t">O<tspan font-size="14" dy="4">k</tspan></text>
+<path class="ann-line fb" d="M412 443 C404 405, 312 405, 306 449" marker-end="url(#arr-eq)"/>
+<text x="286" y="413" text-anchor="end" class="svg-small">kept in the state</text>
 <text x="230" y="505" text-anchor="middle" class="eq-t">(</text>
 <text x="310" y="505" text-anchor="middle" class="eq-t"><tspan class="v">s</tspan><tspan class="sb" dy="14">k+1</tspan></text>
 <text x="372" y="505" text-anchor="middle" class="eq-t">,</text>
@@ -710,18 +713,18 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
 <text x="1404" y="505" text-anchor="middle" class="eq-t">;</text>
 <text x="1462" y="505" text-anchor="middle" class="eq-t" style="fill:#6B4FBB"><tspan class="v">&#951;</tspan><tspan class="sb" dy="14">k</tspan></text>
 <text x="1522" y="505" text-anchor="middle" class="eq-t">)</text>
-<path class="ann-line" style="stroke:#0B1530" d="M405 395 C405 431 985 415 985 451" marker-end="url(#arr-c0B1530)"/>
 <foreignObject x="270" y="180" width="270" height="215"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#0B1530"><b>Frontend step <i>F</i><sub>m</sub></b>Streaming decoding and runtime scheduling. It keeps the causal order inside each chunk.<span class="ex">Example: <i>m</i> = Omni or Audio</span></div></foreignObject>
-<path class="ann-line" style="stroke:#0F8A5F" d="M690 395 C690 431 1112 415 1112 451" marker-end="url(#arr-c0F8A5F)"/>
+<path class="ann-line" style="stroke:#0B1530" d="M500 395 C500 431 985 415 985 451" marker-end="url(#arr-c0B1530)"/>
 <foreignObject x="555" y="180" width="270" height="215"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#0F8A5F"><b>State before chunk <i>k</i></b>Model context, partial output, and admitted replies that wait for delivery.<span class="ex">Example: the dialogue so far, plus a reply not yet spoken</span></div></foreignObject>
-<path class="ann-line" style="stroke:#B86E00" d="M975 395 C975 431 1228 385 1228 421" marker-end="url(#arr-cB86E00)"/>
+<path class="ann-line" style="stroke:#0F8A5F" d="M690 395 C690 431 1112 415 1112 451" marker-end="url(#arr-c0F8A5F)"/>
 <foreignObject x="840" y="180" width="270" height="215"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#B86E00"><b>Media input</b>Audio: <i>u</i><sub>k</sub>. Omni: (<i>u</i><sub>k</sub>, <i>v</i><sub>k</sub>). <i>v</i><sub>k</sub> is empty when no frame arrives.<span class="ex">Example: 1 s of audio and one video frame</span></div></foreignObject>
-<path class="ann-line" style="stroke:#B0457F" d="M1260 395 C1260 431 1350 415 1350 451" marker-end="url(#arr-cB0457F)"/>
+<path class="ann-line" style="stroke:#B86E00" d="M975 395 C975 431 1228 385 1228 421" marker-end="url(#arr-cB86E00)"/>
 <foreignObject x="1125" y="180" width="270" height="215"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#B0457F"><b>Harness reply</b>Private reply text from the harness. The frontend speaks it later, as <i>Y</i><sub>k</sub>.<span class="ex">Example: "Trattoria Roma is 400 m away."</span></div></foreignObject>
+<path class="ann-line" style="stroke:#B0457F" d="M1260 395 C1260 431 1350 415 1350 451" marker-end="url(#arr-cB0457F)"/>
+<foreignObject x="1410" y="180" width="270" height="215"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#6B4FBB"><b>Runtime feedback</b>What really happened outside the model, such as which speech the user actually heard.<span class="ex">Example: a playback acknowledgment: reply chunk 12 was played</span></div></foreignObject>
 <path class="ann-line" style="stroke:#6B4FBB" d="M1545 395 C1545 431 1462 415 1462 451" marker-end="url(#arr-c6B4FBB)"/>
-<foreignObject x="1410" y="180" width="270" height="215"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#6B4FBB"><b>Runtime feedback</b>Causal events, for example playback acknowledgments.<span class="ex">Example: the Talker confirms that chunk 12 was played</span></div></foreignObject>
 <path class="ann-line" d="M126 595 C126 565 310 569 310 539" marker-end="url(#arr-eq)"/>
-<foreignObject x="0" y="595" width="252" height="180"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card priv"><span class="tag">Private</span><b>State after chunk <i>k</i></b>The next chunk starts from it.<span class="ex">Example: the same context, plus this chunk</span></div></foreignObject>
+<foreignObject x="0" y="595" width="252" height="180"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card priv"><span class="tag">Private</span><b>State after chunk <i>k</i></b>The next chunk starts from it. It keeps all four outputs <i>O</i><sub>k</sub>, so the next step knows what it said, decided, and delegated.</div></foreignObject>
 <path class="ann-line" d="M396 595 C396 565 425 569 425 539" marker-end="url(#arr-eq)"/>
 <foreignObject x="270" y="595" width="252" height="180"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card priv"><span class="tag">Private</span><b>Control token</b>Listen, speak, or end of turn.<span class="ex">Example: <code>&lt;|speak|&gt;</code></span></div></foreignObject>
 <path class="ann-line user" d="M666 595 C666 565 530 569 530 539" marker-end="url(#arr-eq-u)"/>
