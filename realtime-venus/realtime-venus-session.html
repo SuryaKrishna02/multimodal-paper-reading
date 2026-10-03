@@ -354,6 +354,11 @@ table.tbl td code { white-space: nowrap; }
 .pace-ctl .readout { font-size: 22px; }
 .pace-ctl .try { font-size: 20px; }
 .pace-mini svg { flex: none; width: 820px; }
+/* Annotated Eq. 3 (slide 14) */
+.eq-t.sm { font-size: 46px; }
+.eq-t.sm .sb { font-size: 28px; }
+.mini-th { fill: var(--surface-2); stroke: #2D4CB9; stroke-width: 2; }
+.mini-tk { fill: var(--surface-2); stroke: #B86E00; stroke-width: 2; }
 /* Key points: a bold anchor phrase with one short supporting line */
 .points { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 26px; }
 .points.row { display: grid; grid-template-columns: 1fr 1fr; gap: 26px 64px; }
@@ -879,18 +884,53 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
 <!-- 11. Eq 3 -->
 <section class="slide" data-type="content" data-title="Joint policy, Eq. 3">
   <h2>One policy for control, text, and delegation</h2>
-  <div class="math">\[ p_{\theta,\phi}(O_{1:K} \mid U, B) = \prod_{k=1}^{K} p_\theta(c_k, Y_k, D_k \mid U_{\le k}, B_{\le k}, O_{&lt;k})\; p_\phi(S_k \mid H_{\le k}, Y_{\le k}, S_{&lt;k}) \]</div>
-  <div class="cols">
-    <ul class="symbols">
-      <li><span class="sym">\( U, B \)</span> User audio features and sparse backend results.</li>
-      <li><span class="sym">\( p_\theta \)</span> The LLM. It predicts the control token, the text, and the delegate text.</li>
-      <li><span class="sym">\( p_\phi \)</span> The speech decoder. It predicts speech tokens from the LLM hidden states \(H\).</li>
-    </ul>
-    <ul class="points">
-      <li class="point"><b>One representation</b><span>The control token and the reply come from the same state. Thus, a similar sound can get a different action, by its role in the conversation.</span></li>
-      <li class="point step"><b>What training updates</b><span>Backend results are inputs, not predictions. Training updates only the Thinker. The acoustic decoder stays fixed.</span></li>
-    </ul>
-  </div>
+  <svg class="fig" width="1680" height="700" viewBox="0 0 1680 700" role="img" aria-label="Equation 3 with each part explained. The probability of a whole session is a product over chunks. Each chunk has a Thinker factor that predicts control, text, and delegate text, and a Talker factor that predicts speech tokens from the Thinker hidden states. Only the Thinker is trained.">
+<defs><marker id="a3th" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#2D4CB9"/></marker><marker id="a3tk" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#B86E00"/></marker><marker id="a3u" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#0F8A5F"/></marker><marker id="a3b" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#B0457F"/></marker><marker id="a3o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#5A6478"/></marker><marker id="a3h" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="#6B4FBB"/></marker><marker id="a3m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z" fill="var(--muted)"/></marker></defs>
+<text x="0" y="30" class="svg-label strong">Where Eq. 3 sits</text>
+<text x="0" y="62" class="svg-small">Eq. 1 (slide 10) is one step at run time.</text>
+<text x="0" y="88" class="svg-small">Eq. 3 is the training view: the probability</text>
+<text x="0" y="114" class="svg-small">of a whole session, chunk by chunk.</text>
+<rect x="470" y="8" width="250" height="132" rx="12" class="group-bg"/><text x="484" y="30" class="svg-small">chunk 1</text><rect x="482" y="38" width="226" height="38" rx="7" class="mini-th"/><text x="595" y="64" text-anchor="middle" class="svg-small" style="fill:#2D4CB9">Thinker: <tspan font-style="italic">c, Y, D</tspan></text><rect x="482" y="96" width="226" height="38" rx="7" class="mini-tk"/><text x="595" y="122" text-anchor="middle" class="svg-small" style="fill:#B86E00">Talker: <tspan font-style="italic">S</tspan></text><path class="ann-line" style="stroke:#6B4FBB" d="M595 77 V95" marker-end="url(#a3h)"/><text x="606" y="92" class="svg-small" style="fill:#6B4FBB;font-size:15px">H</text><text x="745" y="84" text-anchor="middle" class="eq-s">&#215;</text><rect x="770" y="8" width="250" height="132" rx="12" class="group-bg"/><text x="784" y="30" class="svg-small">chunk 2</text><rect x="782" y="38" width="226" height="38" rx="7" class="mini-th"/><text x="895" y="64" text-anchor="middle" class="svg-small" style="fill:#2D4CB9">Thinker: <tspan font-style="italic">c, Y, D</tspan></text><rect x="782" y="96" width="226" height="38" rx="7" class="mini-tk"/><text x="895" y="122" text-anchor="middle" class="svg-small" style="fill:#B86E00">Talker: <tspan font-style="italic">S</tspan></text><path class="ann-line" style="stroke:#6B4FBB" d="M895 77 V95" marker-end="url(#a3h)"/><text x="906" y="92" class="svg-small" style="fill:#6B4FBB;font-size:15px">H</text><text x="1080" y="84" text-anchor="middle" class="eq-s">&#215; &#8943; &#215;</text><rect x="1140" y="8" width="250" height="132" rx="12" class="group-bg"/><text x="1154" y="30" class="svg-small">chunk <tspan font-style="italic">K</tspan></text><rect x="1152" y="38" width="226" height="38" rx="7" class="mini-th"/><text x="1265" y="64" text-anchor="middle" class="svg-small" style="fill:#2D4CB9">Thinker: <tspan font-style="italic">c, Y, D</tspan></text><rect x="1152" y="96" width="226" height="38" rx="7" class="mini-tk"/><text x="1265" y="122" text-anchor="middle" class="svg-small" style="fill:#B86E00">Talker: <tspan font-style="italic">S</tspan></text><path class="ann-line" style="stroke:#6B4FBB" d="M1265 77 V95" marker-end="url(#a3h)"/><text x="1276" y="92" class="svg-small" style="fill:#6B4FBB;font-size:15px">H</text><text x="1410" y="70" class="svg-small">= the whole session,</text><text x="1410" y="96" class="svg-small">trained on response spans</text>
+<text id="eq3-g1" x="292" y="450" class="eq-t sm"><tspan class="v">p</tspan><tspan class="sb" dy="12">&#952;,&#966;</tspan></text>
+<text id="eq3-g2" x="356" y="450" class="eq-t sm">(</text>
+<text id="eq3-g3" x="374" y="450" class="eq-t sm"><tspan class="v">O</tspan><tspan class="sb" dy="12">1:K</tspan></text>
+<text id="eq3-g4" x="462" y="450" class="eq-t sm">|</text>
+<text id="eq3-g5" x="484" y="450" class="eq-t sm" style="fill:#0F8A5F"><tspan class="v">U</tspan></text>
+<text id="eq3-g6" x="520" y="450" class="eq-t sm">,</text>
+<text id="eq3-g7" x="544" y="450" class="eq-t sm" style="fill:#B0457F"><tspan class="v">B</tspan></text>
+<text id="eq3-g8" x="576" y="450" class="eq-t sm">)</text>
+<text id="eq3-g9" x="614" y="450" class="eq-t sm">=</text>
+<text id="eq3-g10" x="662" y="450" class="eq-t sm">&#8719;</text>
+<text id="eq3-g11" x="718" y="450" class="eq-t sm" style="fill:#2D4CB9"><tspan class="v">p</tspan><tspan class="sb" dy="12">&#952;</tspan></text>
+<text id="eq3-g12" x="756" y="450" class="eq-t sm" style="fill:#2D4CB9"><tspan>(</tspan><tspan class="v">c</tspan><tspan class="sb" dy="12">k</tspan><tspan dy="-12">, </tspan><tspan class="v">Y</tspan><tspan class="sb" dy="12">k</tspan><tspan dy="-12">, </tspan><tspan class="v">D</tspan><tspan class="sb" dy="12">k</tspan><tspan dy="-12"> |</tspan></text>
+<text id="eq3-g13" x="966" y="450" class="eq-t sm" style="fill:#2D4CB9"><tspan class="v">U</tspan><tspan class="sb" dy="12">&#8804;k</tspan><tspan dy="-12">, </tspan><tspan class="v">B</tspan><tspan class="sb" dy="12">&#8804;k</tspan><tspan dy="-12">,</tspan></text>
+<text id="eq3-g14" x="1128" y="450" class="eq-t sm" style="fill:#2D4CB9"><tspan class="v">O</tspan><tspan class="sb" dy="12">&lt;k</tspan></text>
+<text id="eq3-g15" x="1194" y="450" class="eq-t sm" style="fill:#2D4CB9">)</text>
+<text id="eq3-g16" x="1232" y="450" class="eq-t sm" style="fill:#B86E00"><tspan class="v">p</tspan><tspan class="sb" dy="12">&#966;</tspan></text>
+<text id="eq3-g17" x="1274" y="450" class="eq-t sm" style="fill:#B86E00"><tspan>(</tspan><tspan class="v">S</tspan><tspan class="sb" dy="12">k</tspan><tspan dy="-12"> |</tspan></text>
+<text id="eq3-g18" x="1356" y="450" class="eq-t sm" style="fill:#B86E00"><tspan class="v">H</tspan><tspan class="sb" dy="12">&#8804;k</tspan></text>
+<text id="eq3-g19" x="1418" y="450" class="eq-t sm" style="fill:#B86E00"><tspan>, </tspan><tspan class="v">Y</tspan><tspan class="sb" dy="12">&#8804;k</tspan><tspan dy="-12">, </tspan><tspan class="v">S</tspan><tspan class="sb" dy="12">&lt;k</tspan><tspan dy="-12">)</tspan></text>
+<text x="680" y="404" text-anchor="middle" class="eq-t sm"><tspan class="sb">K</tspan></text>
+<text x="680" y="488" text-anchor="middle" class="eq-t sm"><tspan class="sb">k=1</tspan></text>
+<path class="ann-line" style="stroke:#2D4CB9" d="M718 480 V492 H1210 V480"/>
+<path class="ann-line" style="stroke:#B86E00" d="M1232 480 V492 H1588 V480"/>
+<foreignObject x="0" y="170" width="265" height="150"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#5A6478"><b>Whole session</b>All outputs <i>O</i><sub>1</sub> to <i>O</i><sub>K</sub>. Each one is (<i>c</i>, <i>Y</i>, <i>D</i>, <i>S</i>).</div></foreignObject>
+<path class="ann-line" style="stroke:#5A6478" d="M132 320 C132 348 412 378 412 406" marker-end="url(#a3o)"/>
+<foreignObject x="283" y="170" width="265" height="150"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#0F8A5F"><b>User audio <i>U</i></b>Causal user audio features, one slice per chunk.</div></foreignObject>
+<path class="ann-line" style="stroke:#0F8A5F" d="M416 320 C416 348 502 378 502 406" marker-end="url(#a3u)"/>
+<foreignObject x="566" y="170" width="265" height="150"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#B0457F"><b>Backend results <i>B</i></b>Harness replies, sparse in time. An input, not a prediction: no loss on it.</div></foreignObject>
+<path class="ann-line" style="stroke:#B0457F" d="M698 320 C698 348 559 378 559 406" marker-end="url(#a3b)"/>
+<foreignObject x="849" y="170" width="265" height="150"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#0B1530"><b>Chunk by chunk</b>One factor per chunk. Each factor sees only the past, so the model stays causal.</div></foreignObject>
+<path class="ann-line" style="stroke:#0B1530" d="M982 320 C982 348 680 338 680 366" marker-end="url(#a3m)"/>
+<foreignObject x="1132" y="170" width="265" height="150"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#5A6478"><b>Earlier outputs <i>O</i><sub>&lt;k</sub></b>What the model already said, decided, and delegated. The state of slide 10 carries it.</div></foreignObject>
+<path class="ann-line" style="stroke:#5A6478" d="M1264 320 C1264 348 1160 378 1160 406" marker-end="url(#a3o)"/>
+<foreignObject x="1415" y="170" width="265" height="150"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card in" style="border-top-color:#6B4FBB"><b>Hidden states <i>H</i></b>Thinker vectors for each text token. They carry meaning and prosody to the Talker.</div></foreignObject>
+<path class="ann-line" style="stroke:#6B4FBB" d="M1548 320 C1548 348 1386 378 1386 406" marker-end="url(#a3h)"/>
+<foreignObject x="360" y="545" width="660" height="150"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card out" style="border-top-color:#2D4CB9"><span class="tag" style="color:#2D4CB9">Trained</span><b>Thinker <i>p</i><sub>&#952;</sub>: the LLM</b>Predicts the control token, the text, and the delegate text of chunk <i>k</i>. <i>c</i><sub>k</sub> comes from the same state as the reply, so a similar sound can get a different action by its role in the conversation.</div></foreignObject>
+<path class="ann-line" style="stroke:#2D4CB9" d="M690 545 C690 523 964 514 964 494" marker-end="url(#a3th)"/>
+<foreignObject x="1020" y="545" width="660" height="150"><div xmlns="http://www.w3.org/1999/xhtml" class="ann-card out" style="border-top-color:#B86E00"><span class="tag" style="color:#B86E00">Fixed during training</span><b>Talker <i>p</i><sub>&#966;</sub>: the speech decoder</b>Predicts the speech tokens of chunk <i>k</i> from <i>H</i>, the text, and its earlier speech tokens. It stays outside the LLM. Training updates only the Thinker.</div></foreignObject>
+<path class="ann-line" style="stroke:#B86E00" d="M1350 545 C1350 523 1410 514 1410 494" marker-end="url(#a3tk)"/>
+</svg>
   <p class="sources"><span class="source">Sec 4.4</span><span class="source">Eq. 3</span><span class="source">Sec 4.6</span></p>
 </section>
 
