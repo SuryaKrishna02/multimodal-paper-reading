@@ -1246,11 +1246,18 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
       <button class="reset" type="button">Reset</button>
     </div>
     <div class="choice" id="au-b"></div>
-    <svg id="au-svg" class="fig" width="1640" height="460" viewBox="0 0 1640 460" role="img" aria-label="Audio benchmark scores"></svg>
-    <p class="try"><strong>Try:</strong> Select MMAR. Then select MMSU. Find the first place.</p>
+    <div class="cols" style="grid-template-columns:1.2fr 1fr;gap:32px">
+      <svg id="au-svg" class="fig" width="940" height="460" viewBox="0 0 940 460" role="img" aria-label="Audio benchmark scores"></svg>
+      <div class="panel stack" style="gap:8px;font-size:22px">
+        <span class="badge" style="align-self:flex-start">What is measured</span>
+        <h3 id="au-met"></h3>
+        <p id="au-set" style="margin:0;color:var(--muted)"></p>
+        <p id="au-how" style="margin:0"></p>
+      </div>
+    </div>
+    <p class="try"><strong>Try:</strong> Select MMAR. Then select MMSU. Find the first place. Then select AlpacaEval and read how it is scored.</p>
   </div>
-  <p class="note">VoiceBench AlpacaEval reports a judge score. The other benchmarks report accuracy in percent.</p>
-  <p class="sources"><span class="source">Table 4</span><span class="source">Table 5</span><span class="source">Sec 7.4</span></p>
+  <p class="sources"><span class="source">Table 4</span><span class="source">Table 5</span><span class="source">Sec 7.1</span><span class="source">Sec 7.4</span><span class="source"><a href="https://arxiv.org/abs/2410.17196">VoiceBench: judge score</a></span></p>
 </section>
 
 <!-- 23. Full-duplex results -->
@@ -2326,9 +2333,21 @@ const OURS = /Realtime-Venus/;
     ['Realtime-Venus-Omni (9B)', [76.9, 62.0, 65.2, 64.6, 4.75, 83.3, 73.6, 67.5]],
     ['Realtime-Venus-Audio (9B)', [78.0, 63.2, 65.6, 66.0, 4.81, 83.8, 75.7, 67.8]]
   ];
+  const QA = 'The share of questions answered correctly, using the answer check of each benchmark.';
+  const MET = [
+    { met: 'Accuracy', set: 'Audio understanding. An audio clip and a four-option multiple-choice question.', how: 'The share of questions answered correctly. It covers speech, music, and sound.' },
+    { met: 'Accuracy', set: 'Audio understanding, harder: long audio, spatial audio, and several clips at once.', how: 'The share of questions answered correctly. The questions need reasoning over more than one step.' },
+    { met: 'Accuracy', set: 'Audio understanding. Multiple-choice questions on speech, sound, music, and their mixes.', how: 'The share of questions answered correctly. The questions need reasoning from context and acoustic evidence.' },
+    { met: 'Accuracy', set: 'Spoken-language understanding. Four-option multiple-choice questions over 47 tasks.', how: 'The share of questions answered correctly. It tests what is said and how it is said: prosody, emotion, and speaker traits.' },
+    { met: 'Judge score, 1 to 5', set: 'Spoken question answering. Open-ended AlpacaEval instructions, converted to speech.', how: 'GPT-4o-mini reads each reply and rates it from 1 (irrelevant or wrong) to 5 (relevant, accurate, and to the point). The bar shows the mean. This axis runs to 5, not 100.' },
+    { met: 'Accuracy', set: 'Spoken question answering. Short factual questions, asked in speech.', how: QA },
+    { met: 'Accuracy', set: 'Spoken question answering. TriviaQA questions, asked in speech.', how: QA },
+    { met: 'Accuracy', set: 'Spoken question answering in Chinese. Academic knowledge questions, asked in speech.', how: QA }
+  ];
   const b = choice($('au-b'), B.map((n, i) => ({ v: i, label: n })), 0, render);
   function render() {
     const i = +b.v, alp = i === 4;
+    $('au-met').textContent = MET[i].met; $('au-set').textContent = MET[i].set; $('au-how').textContent = MET[i].how;
     const rows = M.map(r => ({ label: r[0], value: r[1][i], ours: OURS.test(r[0]) })).sort((p, q) => q.value - p.value);
     hbars($('au-svg'), rows, { max: alp ? 5 : 100, labelW: 440, fmt: v => alp ? v.toFixed(2) : v.toFixed(1) });
   }
