@@ -65,7 +65,6 @@ body.flow .viz { width: 100%; height: auto; }
 body.flow input[type="range"] { width: 100%; }
 body.flow .option { font-size: 20px; min-height: 0; padding: 14px 16px; }
 body.flow .prompt { font-size: 22px; grid-template-columns: 36px 1fr; }
-body.flow #btn-full { display: none; }
 body.flow .row { flex-wrap: wrap; }
 body.flow .badge, body.flow .try, body.flow .readout, body.flow .controls, body.flow .meet-hint, body.flow .explain, body.flow button { font-size: 16px; }
 body.flow #bar { gap: 8px; padding-left: 8px; padding-right: 8px; }
@@ -175,16 +174,6 @@ button.reset { font-size: 20px; padding: 4px 14px; }
 #progress span.quiz { background: transparent; border: 2px solid var(--accent-strong); }
 #progress span.quiz.done { background: var(--accent-strong); }
 #counter { font-family: var(--font-mono); min-width: 72px; text-align: center; color: var(--muted); }
-
-/* ---------- Overview grid ---------- */
-#grid { position: fixed; inset: 0; z-index: 20; background: var(--bg); overflow-y: auto; padding: calc(32px + env(safe-area-inset-top, 0px)) 32px calc(32px + env(safe-area-inset-bottom, 0px)); }
-#grid[hidden] { display: none; }
-#grid h2 { font-size: 28px; margin-bottom: 20px; }
-.grid-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
-.grid-card { text-align: left; font-size: 16px; padding: 14px; min-height: 96px; display: flex; flex-direction: column; gap: 6px; border-width: 1px; }
-.grid-card .n { font-family: var(--font-mono); color: var(--muted); }
-.grid-card.quiz { border: 2px solid var(--accent-strong); }
-.grid-card.current { background: var(--accent); color: #fff; }
 
 /* ---------- Brand frame: Cohere Labs multimodal sessions. Light theme only. ---------- */
 .brand { position: absolute; left: 120px; bottom: 50px; width: 172px; height: 44px; background: url("data:image/png;base64,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") left center / contain no-repeat; pointer-events: none; }
@@ -1170,14 +1159,7 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
   <button class="nav-btn" id="btn-next" type="button" aria-label="Next"><svg width="16" height="16" viewBox="0 0 16 16" aria-hidden="true"><path d="m6 3 5 5-5 5" fill="none" stroke="currentColor" stroke-width="2"/></svg></button>
   <div id="progress" aria-hidden="true"></div>
   <span id="counter"></span>
-  <button id="btn-grid" type="button" title="Overview (G)">Overview</button>
-  <button id="btn-full" type="button" title="Full screen (F)">Full screen</button>
 </nav>
-
-<div id="grid" hidden>
-  <h2>All slides</h2>
-  <div class="grid-list"></div>
-</div>
 
 <script>
 /* ================= Deck engine. Edit only if needed. ================= */
@@ -1186,8 +1168,6 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
   const slides = Array.from(deck.querySelectorAll(':scope > section.slide'));
   const progress = document.getElementById('progress');
   const counter = document.getElementById('counter');
-  const grid = document.getElementById('grid');
-  const gridList = grid.querySelector('.grid-list');
   const enterHandlers = new Map();
   let cur = -1;
 
@@ -1234,46 +1214,21 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
     if (t !== 'session') { const b = document.createElement('div'); b.className = 'brand'; b.setAttribute('role', 'img'); b.setAttribute('aria-label', 'Cohere Labs'); s.appendChild(b); }
   });
 
-  // Progress bar and overview grid
+  // Progress bar
   slides.forEach((s, i) => {
     const seg = document.createElement('span');
     if (s.dataset.type === 'quiz') seg.classList.add('quiz');
     seg.title = (i + 1) + '. ' + titleOf(s);
     seg.addEventListener('click', () => show(i));
     progress.appendChild(seg);
-    const card = document.createElement('button');
-    card.type = 'button';
-    card.className = 'grid-card' + (s.dataset.type === 'quiz' ? ' quiz' : '');
-    card.innerHTML = '<span class="n"></span><span class="t"></span>';
-    card.querySelector('.n').textContent = (i + 1) + (s.dataset.type === 'quiz' ? '  Quiz' : '');
-    card.querySelector('.t').textContent = titleOf(s);
-    card.addEventListener('click', () => { toggleGrid(false); show(i); });
-    gridList.appendChild(card);
   });
   function updateChrome() {
     Array.from(progress.children).forEach((seg, i) => seg.classList.toggle('done', i <= cur));
-    Array.from(gridList.children).forEach((c, i) => c.classList.toggle('current', i === cur));
     counter.textContent = (cur + 1) + ' / ' + slides.length;
-  }
-  function toggleGrid(force) {
-    const open = force === undefined ? grid.hidden : force;
-    grid.hidden = !open;
-    if (open) { const c = gridList.children[cur]; if (c) c.focus(); }
-  }
-  function toggleFull() {
-    if (!document.fullscreenEnabled) return;
-    try {
-      const r = document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen();
-      if (r && r.catch) r.catch(err => console.warn(err));
-    } catch (err) { console.warn(err); }
   }
   // Buttons
   document.getElementById('btn-prev').addEventListener('click', prev);
   document.getElementById('btn-next').addEventListener('click', next);
-  document.getElementById('btn-grid').addEventListener('click', () => toggleGrid());
-  document.getElementById('btn-full').addEventListener('click', toggleFull);
-  // Frames that do not allow fullscreen (for example a sandboxed preview) get no Full screen button.
-  if (!document.fullscreenEnabled) document.getElementById('btn-full').hidden = true;
   deck.addEventListener('click', e => {
     const rb = e.target.closest('.reveal-btn');
     if (rb) { reveal(rb.closest('.slide')); return; }
@@ -1287,21 +1242,17 @@ html { font-variant-ligatures: none; font-feature-settings: "liga" 0, "calt" 0; 
     if (e.defaultPrevented || e.altKey || e.ctrlKey || e.metaKey) return;
     const t = e.target;
     if (e.key === 'Escape') {
-      if (!grid.hidden) toggleGrid(false);
-      else if (t && t.blur && t !== document.body) t.blur();
+      if (t && t.blur && t !== document.body) t.blur();
       return;
     }
     if (t && t.closest && t.closest(CAPTURE)) return;
     const onButton = t && t.closest && t.closest('button, a');
-    if (!grid.hidden) { if (e.key === 'g' || e.key === 'G') toggleGrid(false); return; }
     switch (e.key) {
       case 'ArrowRight': case 'PageDown': next(); break;
       case ' ': if (onButton) return; next(); break;
       case 'ArrowLeft': case 'PageUp': prev(); break;
       case 'Home': show(0); break;
       case 'End': show(slides.length - 1); break;
-      case 'f': case 'F': toggleFull(); break;
-      case 'g': case 'G': toggleGrid(true); break;
       default: return;
     }
     e.preventDefault();
